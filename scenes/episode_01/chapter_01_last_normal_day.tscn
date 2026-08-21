@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://scenes/episode_01/chapter_01_last_normal_day.gd" id="1_chapter"]
 [ext_resource type="Script" path="res://player/third_person_player.gd" id="2_player"]
@@ -92,6 +92,12 @@ albedo_color = Color(0.82, 0.57, 0.4, 1)
 material = SubResource("Mat_head")
 radius = 0.3
 height = 0.6
+[sub_resource type="StandardMaterial3D" id="Mat_nezuko"]
+albedo_color = Color(0.5, 0.12, 0.25, 1)
+[sub_resource type="CapsuleMesh" id="Mesh_nezuko"]
+material = SubResource("Mat_nezuko")
+radius = 0.28
+height = 1.15
 
 [node name="Chapter01LastNormalDay" type="Node3D"]
 script = ExtResource("1_chapter")
@@ -189,6 +195,25 @@ shape = SubResource("Shape_interact")
 position = Vector3(0, 1.2, 0)
 mesh = SubResource("Mesh_marker")
 
+[node name="MountainDescentCheckpoint" type="Area3D" parent="."]
+position = Vector3(0, 0.5, -48)
+script = ExtResource("4_interactable")
+interactable_id = "descent"
+[node name="Collision" type="CollisionShape3D" parent="MountainDescentCheckpoint"]
+shape = SubResource("Shape_interact")
+[node name="Marker" type="MeshInstance3D" parent="MountainDescentCheckpoint"]
+position = Vector3(0, 1.2, 0)
+mesh = SubResource("Mesh_marker")
+
+[node name="NezukoAtHouse" type="Node3D" parent="."]
+position = Vector3(-4.5, 0.6, 7)
+visible = false
+[node name="Body" type="MeshInstance3D" parent="NezukoAtHouse"]
+rotation_degrees = Vector3(0, 0, 78)
+mesh = SubResource("Mesh_nezuko")
+
+[node name="CinematicCamera" type="Camera3D" parent="."]
+
 [node name="Player" type="CharacterBody3D" parent="."]
 position = Vector3(0, 1, 8)
 script = ExtResource("2_player")
@@ -209,6 +234,12 @@ spring_length = 4.5
 margin = 0.15
 [node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D"]
 current = true
+[node name="CarriedNezuko" type="Node3D" parent="Player"]
+position = Vector3(0.45, 0.55, 0.35)
+rotation_degrees = Vector3(70, 0, -18)
+visible = false
+[node name="Body" type="MeshInstance3D" parent="Player/CarriedNezuko"]
+mesh = SubResource("Mesh_nezuko")
 
 [node name="ObjectiveTracker" type="Node" parent="."]
 script = ExtResource("3_objective")
@@ -262,6 +293,23 @@ offset_top = 42.0
 offset_bottom = 70.0
 grow_horizontal = 2
 horizontal_alignment = 1
+visible = false
+[node name="DialogueLabel" type="Label" parent="HUD"]
+unique_name_in_owner = true
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 120.0
+offset_top = -170.0
+offset_right = -120.0
+offset_bottom = -110.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.95, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 19
+horizontal_alignment = 1
+autowrap_mode = 2
 visible = false
 [node name="IntroPanel" type="ColorRect" parent="HUD"]
 unique_name_in_owner = true

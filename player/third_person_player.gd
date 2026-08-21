@@ -25,6 +25,8 @@ signal interact_pressed
 @onready var visual: Node3D = $Visual
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
+var controls_enabled: bool = true
+var carrying_companion: bool = false
 
 func _ready() -> void:
 	spring_arm.spring_length = camera_distance
@@ -34,6 +36,8 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause"):
 		_toggle_mouse_capture()
+		return
+	if not controls_enabled:
 		return
 	if event.is_action_pressed("interact"):
 		if interact_pressed.get_connections().is_empty():
@@ -62,10 +66,16 @@ func _update_vertical_velocity(delta: float) -> void:
 		velocity.y = -0.1
 
 func _update_horizontal_velocity(delta: float) -> void:
+	if not controls_enabled:
+		velocity.x = move_toward(velocity.x, 0.0, deceleration * delta)
+		velocity.z = move_toward(velocity.z, 0.0, deceleration * delta)
+		return
 	var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 	var move_direction := Vector3(input_vector.x, 0.0, input_vector.y).rotated(Vector3.UP, rotation.y).normalized()
 	var is_sprinting := Input.is_action_pressed("sprint") and input_vector.length_squared() > 0.0 and stamina > 0.0
 	var target_speed := sprint_speed if is_sprinting else walk_speed
+	if carrying_companion:
+		target_speed *= 0.8
 	if is_sprinting:
 		stamina = maxf(0.0, stamina - stamina_drain_per_second * delta)
 	else:
@@ -98,3 +108,6 @@ func _restore_saved_position() -> void:
 func _toggle_mouse_capture() -> void:
 	var next_mode := Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED else Input.MOUSE_MODE_CAPTURED
 	Input.set_mouse_mode(next_mode)
+
+func set_controls_enabled(enabled: bool) -> void:
+	controls_enabled = enabled
