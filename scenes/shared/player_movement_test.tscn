@@ -1,0 +1,150 @@
+[gd_scene load_steps=14 format=3]
+
+[ext_resource type="Script" path="res://player/third_person_player.gd" id="1_player"]
+
+[sub_resource type="Environment" id="Environment_world"]
+background_mode = 1
+background_color = Color(0.055, 0.09, 0.16, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.52, 0.63, 0.8, 1)
+ambient_light_energy = 0.7
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="Material_ground"]
+albedo_color = Color(0.13, 0.22, 0.16, 1)
+roughness = 1.0
+
+[sub_resource type="PlaneMesh" id="Mesh_ground"]
+material = SubResource("Material_ground")
+size = Vector2(80, 80)
+
+[sub_resource type="BoxShape3D" id="Shape_ground"]
+size = Vector3(80, 1, 80)
+
+[sub_resource type="StandardMaterial3D" id="Material_obstacle"]
+albedo_color = Color(0.34, 0.19, 0.11, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_obstacle"]
+material = SubResource("Material_obstacle")
+size = Vector3(2.5, 2.5, 2.5)
+
+[sub_resource type="BoxShape3D" id="Shape_obstacle"]
+size = Vector3(2.5, 2.5, 2.5)
+
+[sub_resource type="CapsuleShape3D" id="Shape_player"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="Material_body"]
+albedo_color = Color(0.13, 0.4, 0.32, 1)
+
+[sub_resource type="CapsuleMesh" id="Mesh_body"]
+material = SubResource("Material_body")
+radius = 0.35
+height = 1.25
+
+[sub_resource type="StandardMaterial3D" id="Material_head"]
+albedo_color = Color(0.82, 0.57, 0.4, 1)
+
+[sub_resource type="SphereMesh" id="Mesh_head"]
+material = SubResource("Material_head")
+radius = 0.3
+height = 0.6
+
+[node name="PlayerMovementTest" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_world")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -35, 0)
+light_energy = 1.2
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="Mesh" type="MeshInstance3D" parent="Ground"]
+mesh = SubResource("Mesh_ground")
+
+[node name="Collision" type="CollisionShape3D" parent="Ground"]
+position = Vector3(0, -0.5, 0)
+shape = SubResource("Shape_ground")
+
+[node name="ObstacleA" type="StaticBody3D" parent="."]
+position = Vector3(-4, 1.25, -3)
+
+[node name="Mesh" type="MeshInstance3D" parent="ObstacleA"]
+mesh = SubResource("Mesh_obstacle")
+
+[node name="Collision" type="CollisionShape3D" parent="ObstacleA"]
+shape = SubResource("Shape_obstacle")
+
+[node name="ObstacleB" type="StaticBody3D" parent="."]
+position = Vector3(4, 1.25, -6)
+
+[node name="Mesh" type="MeshInstance3D" parent="ObstacleB"]
+mesh = SubResource("Mesh_obstacle")
+
+[node name="Collision" type="CollisionShape3D" parent="ObstacleB"]
+shape = SubResource("Shape_obstacle")
+
+[node name="ObstacleC" type="StaticBody3D" parent="."]
+position = Vector3(0, 1.25, -11)
+
+[node name="Mesh" type="MeshInstance3D" parent="ObstacleC"]
+mesh = SubResource("Mesh_obstacle")
+
+[node name="Collision" type="CollisionShape3D" parent="ObstacleC"]
+shape = SubResource("Shape_obstacle")
+
+[node name="Player" type="CharacterBody3D" parent="."]
+position = Vector3(0, 1, 5)
+script = ExtResource("1_player")
+
+[node name="Collision" type="CollisionShape3D" parent="Player"]
+shape = SubResource("Shape_player")
+
+[node name="Visual" type="Node3D" parent="Player"]
+
+[node name="Body" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0, -0.2, 0)
+mesh = SubResource("Mesh_body")
+
+[node name="Head" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0, 0.65, 0)
+mesh = SubResource("Mesh_head")
+
+[node name="CameraPivot" type="Node3D" parent="Player"]
+position = Vector3(0, 0.65, 0)
+rotation_degrees = Vector3(-12, 0, 0)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="Player/CameraPivot"]
+spring_length = 4.5
+margin = 0.15
+
+[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D"]
+current = true
+
+[node name="Interface" type="CanvasLayer" parent="."]
+
+[node name="Panel" type="ColorRect" parent="Interface"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 330.0
+offset_bottom = 184.0
+color = Color(0.02, 0.03, 0.06, 0.78)
+
+[node name="Controls" type="Label" parent="Interface/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 14.0
+offset_right = -16.0
+offset_bottom = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "WASD - Move\nMouse - Look\nShift - Sprint\nSpace - Jump\nEsc - Release mouse / pause\nE - Save checkpoint"

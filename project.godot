@@ -13,7 +13,7 @@ config_version=5
 config/name="DemonBlade_codex"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
-run/main_scene="res://scenes/shared/foundation_test.tscn"
+run/main_scene="res://scenes/shared/player_movement_test.tscn"
 
 [autoload]
 
@@ -50,7 +50,7 @@ ability_2={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":5
 ability_3={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":51)]}
 ability_4={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":52)]}
 switch_character={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":84)]}
-pause={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":4194309)]}
+pause={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":4194305)]}
 
 [rendering]
 
