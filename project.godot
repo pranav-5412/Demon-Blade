@@ -13,7 +13,7 @@ config_version=5
 config/name="DemonBlade_codex"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
-run/main_scene="res://scenes/shared/player_movement_test.tscn"
+run/main_scene="res://scenes/episode_01/chapter_01_last_normal_day.tscn"
 
 [autoload]
 

@@ -1,6 +1,8 @@
 class_name ThirdPersonPlayer
 extends CharacterBody3D
 
+signal interact_pressed
+
 @export var walk_speed: float = 4.5
 @export var sprint_speed: float = 7.5
 @export var acceleration: float = 18.0
@@ -34,7 +36,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_mouse_capture()
 		return
 	if event.is_action_pressed("interact"):
-		SaveManager.save_checkpoint()
+		if interact_pressed.get_connections().is_empty():
+			SaveManager.save_checkpoint()
+		else:
+			interact_pressed.emit()
 		return
 	if event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
