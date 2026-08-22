@@ -31,6 +31,8 @@ const OBJECTIVES := [
 @onready var nezuko_at_house: Node3D = $NezukoAtHouse
 @onready var carried_nezuko: Node3D = $Player/CarriedNezuko
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
+@onready var family_scene: Node3D = $FamilyScene
+@onready var cinematic_shade: ColorRect = %CinematicShade
 
 var active_interactable: ChapterInteractable
 var is_chopping: bool = false
@@ -117,6 +119,7 @@ func _load_chapter_state() -> void:
 	_set_step(step)
 	if bool(data.story_flags.get("family_tragedy_seen", false)):
 		_apply_tragedy_atmosphere()
+		family_scene.visible = true
 	if step >= CARRY_STEP:
 		carried_nezuko.visible = true
 		player.carrying_companion = true
@@ -128,18 +131,24 @@ func _begin_tragedy_sequence() -> void:
 	is_cinematic = true
 	player.set_controls_enabled(false)
 	_apply_tragedy_atmosphere()
+	family_scene.visible = true
+	cinematic_shade.visible = true
 	var data := GameManager.save_data
 	data.episode = 1
 	data.chapter = 2
 	data.story_flags["family_tragedy_seen"] = true
 	_checkpoint("Checkpoint saved")
-	cinematic_camera.global_position = Vector3(-0.5, 3.8, 14.0)
-	cinematic_camera.look_at($House.global_position + Vector3(0.0, 1.2, 0.0), Vector3.UP)
 	cinematic_camera.current = true
-	await _show_dialogue("The air feels wrong. The house is silent.", 2.5)
-	await _show_dialogue("Something terrible has happened here.", 2.5)
+	_focus_cinematic(Vector3(-2.0, 3.3, 15.0), $House.global_position + Vector3(0.0, 1.1, 0.0))
+	await _show_dialogue("The house is silent. Something is terribly wrong.", 3.0)
+	await _move_cinematic(Vector3(-6.0, 2.4, 13.5), $House.global_position + Vector3(0.0, 0.9, 2.4), 2.5)
+	await _move_cinematic(Vector3(-7.0, 1.85, 10.65), family_scene.global_position + Vector3(0.0, 0.35, 0.35), 1.5)
+	await _move_cinematic(Vector3(-6.2, 1.6, 9.15), family_scene.global_position + Vector3(0.0, 0.25, 0.15), 1.4)
+	await _show_dialogue("No... what happened here? Please, someone answer me.", 3.5)
 	nezuko_at_house.visible = true
-	await _show_dialogue("One person is still breathing. I have to get her help.", 3.0)
+	await _move_cinematic(Vector3(-6.15, 1.25, 8.7), nezuko_at_house.global_position + Vector3(0.0, 0.1, 0.0), 1.6)
+	await _show_dialogue("Nezuko? Wait... she is still breathing.", 3.0)
+	await _show_dialogue("Hold on. I will carry you down the mountain and find help.", 3.5)
 	nezuko_at_house.visible = false
 	carried_nezuko.visible = true
 	player.carrying_companion = true
@@ -147,6 +156,7 @@ func _begin_tragedy_sequence() -> void:
 	data.story_flags["carrying_nezuko"] = true
 	_set_step(CARRY_STEP)
 	_checkpoint("Nezuko found - checkpoint saved")
+	cinematic_shade.visible = false
 	player_camera.current = true
 	player.set_controls_enabled(true)
 	is_cinematic = false
@@ -157,10 +167,22 @@ func _show_dialogue(line: String, duration: float) -> void:
 	await get_tree().create_timer(duration).timeout
 	dialogue_label.visible = false
 
+func _focus_cinematic(camera_position: Vector3, focus_position: Vector3) -> void:
+	cinematic_camera.global_position = camera_position
+	cinematic_camera.look_at(focus_position, Vector3.UP)
+
+func _move_cinematic(camera_position: Vector3, focus_position: Vector3, duration: float) -> void:
+	var target_transform := Transform3D(Basis.IDENTITY, camera_position).looking_at(focus_position, Vector3.UP)
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_property(cinematic_camera, "global_transform", target_transform, duration)
+	await tween.finished
+
 func _apply_tragedy_atmosphere() -> void:
 	world_environment.environment.background_color = Color(0.035, 0.06, 0.12, 1.0)
 	world_environment.environment.ambient_light_color = Color(0.22, 0.3, 0.48, 1.0)
 	world_environment.environment.fog_light_color = Color(0.18, 0.24, 0.38, 1.0)
+	$TragedyLight.visible = true
 
 func _on_objective_changed(text: String, _step: int) -> void:
 	objective_label.text = "OBJECTIVE\n%s" % text

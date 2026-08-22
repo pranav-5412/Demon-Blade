@@ -1,9 +1,10 @@
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=43 format=3]
 
 [ext_resource type="Script" path="res://scenes/episode_01/chapter_01_last_normal_day.gd" id="1_chapter"]
 [ext_resource type="Script" path="res://player/third_person_player.gd" id="2_player"]
 [ext_resource type="Script" path="res://systems/objective_tracker.gd" id="3_objective"]
 [ext_resource type="Script" path="res://systems/chapter_interactable.gd" id="4_interactable"]
+[ext_resource type="Script" path="res://systems/companion_breath.gd" id="5_breath"]
 
 [sub_resource type="Environment" id="Environment_world"]
 background_mode = 1
@@ -37,6 +38,14 @@ material = SubResource("Mat_wood")
 size = Vector3(6, 3.5, 5)
 [sub_resource type="BoxShape3D" id="Shape_house"]
 size = Vector3(6, 3.5, 5)
+[sub_resource type="BoxShape3D" id="Shape_side_wall"]
+size = Vector3(0.3, 3.5, 5)
+[sub_resource type="BoxShape3D" id="Shape_back_wall"]
+size = Vector3(6, 3.5, 0.3)
+[sub_resource type="BoxShape3D" id="Shape_door_side"]
+size = Vector3(2.15, 3.5, 0.3)
+[sub_resource type="BoxShape3D" id="Shape_door_top"]
+size = Vector3(1.7, 1.1, 0.3)
 
 [sub_resource type="StandardMaterial3D" id="Mat_roof"]
 albedo_color = Color(0.12, 0.13, 0.17, 1)
@@ -98,6 +107,44 @@ albedo_color = Color(0.5, 0.12, 0.25, 1)
 material = SubResource("Mat_nezuko")
 radius = 0.28
 height = 1.15
+[sub_resource type="StandardMaterial3D" id="Mat_family"]
+albedo_color = Color(0.16, 0.13, 0.18, 1)
+[sub_resource type="CapsuleMesh" id="Mesh_family"]
+material = SubResource("Mat_family")
+radius = 0.27
+height = 1.1
+[sub_resource type="StandardMaterial3D" id="Mat_household"]
+albedo_color = Color(0.18, 0.1, 0.06, 1)
+[sub_resource type="BoxMesh" id="Mesh_household"]
+material = SubResource("Mat_household")
+size = Vector3(0.8, 0.5, 0.6)
+[sub_resource type="StandardMaterial3D" id="Mat_blood"]
+albedo_color = Color(0.24, 0.025, 0.025, 1)
+roughness = 1.0
+[sub_resource type="PlaneMesh" id="Mesh_blood"]
+material = SubResource("Mat_blood")
+size = Vector2(1.5, 1.05)
+[sub_resource type="StandardMaterial3D" id="Mat_mat"]
+albedo_color = Color(0.25, 0.18, 0.12, 1)
+[sub_resource type="BoxMesh" id="Mesh_mat"]
+material = SubResource("Mat_mat")
+size = Vector3(1.65, 0.08, 0.85)
+[sub_resource type="StandardMaterial3D" id="Mat_table"]
+albedo_color = Color(0.3, 0.17, 0.08, 1)
+[sub_resource type="BoxMesh" id="Mesh_table"]
+material = SubResource("Mat_table")
+size = Vector3(1.2, 0.38, 0.72)
+[sub_resource type="StandardMaterial3D" id="Mat_family_skin"]
+albedo_color = Color(0.48, 0.31, 0.24, 1)
+[sub_resource type="SphereMesh" id="Mesh_family_head"]
+material = SubResource("Mat_family_skin")
+radius = 0.22
+height = 0.44
+[sub_resource type="CylinderMesh" id="Mesh_family_limb"]
+material = SubResource("Mat_family")
+top_radius = 0.09
+bottom_radius = 0.11
+height = 0.65
 
 [node name="Chapter01LastNormalDay" type="Node3D"]
 script = ExtResource("1_chapter")
@@ -108,6 +155,12 @@ environment = SubResource("Environment_world")
 rotation_degrees = Vector3(-48, -28, 0)
 light_energy = 1.25
 shadow_enabled = true
+[node name="TragedyLight" type="OmniLight3D" parent="."]
+position = Vector3(-5, 3.5, 7)
+light_color = Color(0.55, 0.12, 0.12, 1)
+light_energy = 1.3
+omni_range = 11.0
+visible = false
 
 [node name="Ground" type="StaticBody3D" parent="."]
 [node name="Mesh" type="MeshInstance3D" parent="Ground"]
@@ -121,13 +174,55 @@ mesh = SubResource("Mesh_path")
 
 [node name="House" type="StaticBody3D" parent="."]
 position = Vector3(-7, 1.75, 8)
-[node name="Walls" type="MeshInstance3D" parent="House"]
+[node name="Floor" type="MeshInstance3D" parent="House"]
+position = Vector3(0, -1.65, 0)
+scale = Vector3(1, 0.057, 1)
+mesh = SubResource("Mesh_house")
+[node name="WestWall" type="MeshInstance3D" parent="House"]
+position = Vector3(-2.85, 0, 0)
+scale = Vector3(0.05, 1, 1)
+mesh = SubResource("Mesh_house")
+[node name="EastWall" type="MeshInstance3D" parent="House"]
+position = Vector3(2.85, 0, 0)
+scale = Vector3(0.05, 1, 1)
+mesh = SubResource("Mesh_house")
+[node name="NorthWall" type="MeshInstance3D" parent="House"]
+position = Vector3(0, 0, -2.35)
+scale = Vector3(1, 1, 0.06)
+mesh = SubResource("Mesh_house")
+[node name="SouthWallLeft" type="MeshInstance3D" parent="House"]
+position = Vector3(-1.92, 0, 2.35)
+scale = Vector3(0.358, 1, 0.06)
+mesh = SubResource("Mesh_house")
+[node name="SouthWallRight" type="MeshInstance3D" parent="House"]
+position = Vector3(1.92, 0, 2.35)
+scale = Vector3(0.358, 1, 0.06)
+mesh = SubResource("Mesh_house")
+[node name="SouthWallTop" type="MeshInstance3D" parent="House"]
+position = Vector3(0, 1.2, 2.35)
+scale = Vector3(0.283, 0.314, 0.06)
 mesh = SubResource("Mesh_house")
 [node name="Roof" type="MeshInstance3D" parent="House"]
 position = Vector3(0, 2.5, 0)
 mesh = SubResource("Mesh_roof")
-[node name="Collision" type="CollisionShape3D" parent="House"]
-shape = SubResource("Shape_house")
+[node name="WestWallCollision" type="CollisionShape3D" parent="House"]
+position = Vector3(-2.85, 0, 0)
+shape = SubResource("Shape_side_wall")
+[node name="EastWallCollision" type="CollisionShape3D" parent="House"]
+position = Vector3(2.85, 0, 0)
+shape = SubResource("Shape_side_wall")
+[node name="NorthWallCollision" type="CollisionShape3D" parent="House"]
+position = Vector3(0, 0, -2.35)
+shape = SubResource("Shape_back_wall")
+[node name="SouthWallLeftCollision" type="CollisionShape3D" parent="House"]
+position = Vector3(-1.92, 0, 2.35)
+shape = SubResource("Shape_door_side")
+[node name="SouthWallRightCollision" type="CollisionShape3D" parent="House"]
+position = Vector3(1.92, 0, 2.35)
+shape = SubResource("Shape_door_side")
+[node name="SouthWallTopCollision" type="CollisionShape3D" parent="House"]
+position = Vector3(0, 1.2, 2.35)
+shape = SubResource("Shape_door_top")
 
 [node name="TreeA" type="Node3D" parent="."]
 position = Vector3(7, 0, 5)
@@ -206,13 +301,96 @@ position = Vector3(0, 1.2, 0)
 mesh = SubResource("Mesh_marker")
 
 [node name="NezukoAtHouse" type="Node3D" parent="."]
-position = Vector3(-4.5, 0.6, 7)
+position = Vector3(-8.45, 0.45, 8.9)
 visible = false
+script = ExtResource("5_breath")
 [node name="Body" type="MeshInstance3D" parent="NezukoAtHouse"]
 rotation_degrees = Vector3(0, 0, 78)
 mesh = SubResource("Mesh_nezuko")
 
 [node name="CinematicCamera" type="Camera3D" parent="."]
+
+[node name="FamilyScene" type="Node3D" parent="."]
+position = Vector3(-7, 0.35, 8)
+visible = false
+[node name="SleepingMatA" type="MeshInstance3D" parent="FamilyScene"]
+position = Vector3(-1.2, -0.25, 0.55)
+rotation_degrees = Vector3(0, 14, 0)
+mesh = SubResource("Mesh_mat")
+[node name="SleepingMatB" type="MeshInstance3D" parent="FamilyScene"]
+position = Vector3(1.15, -0.25, 0.55)
+rotation_degrees = Vector3(0, -18, 0)
+mesh = SubResource("Mesh_mat")
+[node name="LowTable" type="MeshInstance3D" parent="FamilyScene"]
+position = Vector3(-0.15, -0.03, -1.2)
+mesh = SubResource("Mesh_table")
+[node name="FamilyMemberA" type="Node3D" parent="FamilyScene"]
+position = Vector3(-1.15, 0.12, 0.55)
+rotation_degrees = Vector3(0, 0, 76)
+[node name="Torso" type="MeshInstance3D" parent="FamilyScene/FamilyMemberA"]
+mesh = SubResource("Mesh_family")
+[node name="Head" type="MeshInstance3D" parent="FamilyScene/FamilyMemberA"]
+position = Vector3(0, 0.62, 0)
+mesh = SubResource("Mesh_family_head")
+[node name="Arm" type="MeshInstance3D" parent="FamilyScene/FamilyMemberA"]
+position = Vector3(0.32, -0.16, 0)
+rotation_degrees = Vector3(0, 0, 62)
+mesh = SubResource("Mesh_family_limb")
+[node name="Leg" type="MeshInstance3D" parent="FamilyScene/FamilyMemberA"]
+position = Vector3(-0.3, -0.22, 0)
+rotation_degrees = Vector3(0, 0, -56)
+mesh = SubResource("Mesh_family_limb")
+[node name="BloodPatchA" type="MeshInstance3D" parent="FamilyScene"]
+position = Vector3(-1.15, -0.23, 0.55)
+mesh = SubResource("Mesh_blood")
+[node name="FamilyMemberB" type="Node3D" parent="FamilyScene"]
+position = Vector3(0.15, 0.12, -0.45)
+rotation_degrees = Vector3(0, 25, 93)
+[node name="Torso" type="MeshInstance3D" parent="FamilyScene/FamilyMemberB"]
+mesh = SubResource("Mesh_family")
+[node name="Head" type="MeshInstance3D" parent="FamilyScene/FamilyMemberB"]
+position = Vector3(0, 0.62, 0)
+mesh = SubResource("Mesh_family_head")
+[node name="Arm" type="MeshInstance3D" parent="FamilyScene/FamilyMemberB"]
+position = Vector3(0.34, -0.1, 0)
+rotation_degrees = Vector3(0, 0, 57)
+mesh = SubResource("Mesh_family_limb")
+[node name="Leg" type="MeshInstance3D" parent="FamilyScene/FamilyMemberB"]
+position = Vector3(-0.3, -0.18, 0)
+rotation_degrees = Vector3(0, 0, -61)
+mesh = SubResource("Mesh_family_limb")
+[node name="BloodPatchB" type="MeshInstance3D" parent="FamilyScene"]
+position = Vector3(0.15, -0.23, -0.45)
+rotation_degrees = Vector3(0, 28, 0)
+mesh = SubResource("Mesh_blood")
+[node name="FamilyMemberC" type="Node3D" parent="FamilyScene"]
+position = Vector3(1.2, 0.12, 0.65)
+rotation_degrees = Vector3(0, -32, 82)
+[node name="Torso" type="MeshInstance3D" parent="FamilyScene/FamilyMemberC"]
+mesh = SubResource("Mesh_family")
+[node name="Head" type="MeshInstance3D" parent="FamilyScene/FamilyMemberC"]
+position = Vector3(0, 0.62, 0)
+mesh = SubResource("Mesh_family_head")
+[node name="Arm" type="MeshInstance3D" parent="FamilyScene/FamilyMemberC"]
+position = Vector3(0.33, -0.14, 0)
+rotation_degrees = Vector3(0, 0, 64)
+mesh = SubResource("Mesh_family_limb")
+[node name="Leg" type="MeshInstance3D" parent="FamilyScene/FamilyMemberC"]
+position = Vector3(-0.31, -0.2, 0)
+rotation_degrees = Vector3(0, 0, -59)
+mesh = SubResource("Mesh_family_limb")
+[node name="BloodPatchC" type="MeshInstance3D" parent="FamilyScene"]
+position = Vector3(1.2, -0.23, 0.65)
+rotation_degrees = Vector3(0, -20, 0)
+mesh = SubResource("Mesh_blood")
+[node name="BrokenCrateA" type="MeshInstance3D" parent="FamilyScene"]
+position = Vector3(-0.2, 0.15, 1.2)
+rotation_degrees = Vector3(20, 10, 38)
+mesh = SubResource("Mesh_household")
+[node name="BrokenCrateB" type="MeshInstance3D" parent="FamilyScene"]
+position = Vector3(1.7, 0.12, -0.3)
+rotation_degrees = Vector3(12, 40, -20)
+mesh = SubResource("Mesh_household")
 
 [node name="Player" type="CharacterBody3D" parent="."]
 position = Vector3(0, 1, 8)
@@ -249,6 +427,16 @@ one_shot = true
 [connection signal="timeout" from="ChoppingTimer" to="." method="_on_chopping_timer_timeout"]
 
 [node name="HUD" type="CanvasLayer" parent="."]
+[node name="CinematicShade" type="ColorRect" parent="HUD"]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.03, 0.08, 0.3)
+mouse_filter = 2
+visible = false
 [node name="Name" type="Label" parent="HUD"]
 offset_left = 24.0
 offset_top = 22.0
