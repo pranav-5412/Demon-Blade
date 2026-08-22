@@ -4,14 +4,17 @@ const WOOD_STEP := 0
 const DELIVERY_STEP := 1
 const RETURN_STEP := 2
 const CARRY_STEP := 3
-const COMPLETE_STEP := 4
+const GIYU_STEP := 4
+const FIND_SHIZU_STEP := 5
+const COMPLETE_STEP := FIND_SHIZU_STEP
 
 const OBJECTIVES := [
 	"Go to the wood chopping area.",
 	"Deliver the wood down the mountain.",
 	"Return home before nightfall.",
 	"Carry Nezuko down the mountain to find help.",
-	"Chapter 2 prototype complete.",
+	"Face the swordsman on the mountain path.",
+	"Find Shizu.",
 ]
 
 @onready var player: ThirdPersonPlayer = $Player
@@ -33,6 +36,7 @@ const OBJECTIVES := [
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var family_scene: Node3D = $FamilyScene
 @onready var cinematic_shade: ColorRect = %CinematicShade
+@onready var giyu_encounter: GiyuEncounter = $GiyuEncounter
 
 var active_interactable: ChapterInteractable
 var is_chopping: bool = false
@@ -45,6 +49,7 @@ func _ready() -> void:
 	delivery_area.activated.connect(_on_interactable_activated)
 	home_area.activated.connect(_on_interactable_activated)
 	descent_area.activated.connect(_on_interactable_activated)
+	giyu_encounter.encounter_completed.connect(_on_giyu_encounter_completed)
 	_load_chapter_state()
 	await get_tree().create_timer(3.0).timeout
 	intro_panel.visible = false
@@ -54,6 +59,8 @@ func _process(_delta: float) -> void:
 	interaction_label.visible = active_interactable != null and not is_chopping and not is_cinematic and objective_tracker.current_step < COMPLETE_STEP
 	if active_interactable != null:
 		interaction_label.text = active_interactable.prompt_text
+	if objective_tracker.current_step in [CARRY_STEP, GIYU_STEP] and descent_area.is_player_nearby(player) and not giyu_encounter.started:
+		_begin_giyu_encounter()
 
 func _find_active_interactable() -> ChapterInteractable:
 	var candidates: Array[ChapterInteractable] = [wood_area, delivery_area, home_area, descent_area]
@@ -84,9 +91,8 @@ func _on_interactable_activated(interactable_id: String) -> void:
 			_checkpoint("Wood delivered - checkpoint saved")
 		"home" when objective_tracker.current_step == RETURN_STEP:
 			_begin_tragedy_sequence()
-		"descent" when objective_tracker.current_step == CARRY_STEP:
-			_set_step(COMPLETE_STEP)
-			_checkpoint("Chapter 2 prototype complete - checkpoint saved")
+		"descent" when objective_tracker.current_step in [CARRY_STEP, GIYU_STEP]:
+			_begin_giyu_encounter()
 
 func _on_chopping_timer_timeout() -> void:
 	is_chopping = false
@@ -97,12 +103,13 @@ func _set_step(step: int) -> void:
 	objective_tracker.set_objective(step, OBJECTIVES[step])
 	var data := GameManager.save_data
 	data.episode = 1
-	data.chapter = 2 if step >= CARRY_STEP else 1
+	data.chapter = 3 if step >= FIND_SHIZU_STEP else (2 if step >= CARRY_STEP else 1)
 	data.current_scene = get_tree().current_scene.scene_file_path
 	data.story_flags["chapter_01_objective_step"] = step
 	data.story_flags["chapter_01_wood_chopped"] = step >= DELIVERY_STEP
 	data.story_flags["chapter_01_wood_delivered"] = step >= RETURN_STEP
 	data.story_flags["chapter_02_checkpoint_reached"] = step >= COMPLETE_STEP
+	data.story_flags["giyu_encounter_objective_reached"] = step >= GIYU_STEP
 
 func _checkpoint(message: String) -> void:
 	SaveManager.save_checkpoint()
@@ -116,6 +123,8 @@ func _load_chapter_state() -> void:
 	var step := WOOD_STEP
 	if data.current_scene == get_tree().current_scene.scene_file_path:
 		step = clampi(int(data.story_flags.get("chapter_01_objective_step", WOOD_STEP)), WOOD_STEP, COMPLETE_STEP)
+	if bool(data.story_flags.get("shizu_location_received", false)):
+		step = FIND_SHIZU_STEP
 	_set_step(step)
 	if bool(data.story_flags.get("family_tragedy_seen", false)):
 		_apply_tragedy_atmosphere()
@@ -124,6 +133,10 @@ func _load_chapter_state() -> void:
 		carried_nezuko.visible = true
 		player.carrying_companion = true
 		nezuko_at_house.visible = false
+	if step >= FIND_SHIZU_STEP:
+		$GiyuEncounter/ShizuRouteMarker.visible = true
+	elif step == GIYU_STEP and bool(data.story_flags.get("giyu_encounter_started", false)):
+		call_deferred("_begin_giyu_encounter")
 
 func _begin_tragedy_sequence() -> void:
 	if is_cinematic:
@@ -183,6 +196,18 @@ func _apply_tragedy_atmosphere() -> void:
 	world_environment.environment.ambient_light_color = Color(0.22, 0.3, 0.48, 1.0)
 	world_environment.environment.fog_light_color = Color(0.18, 0.24, 0.38, 1.0)
 	$TragedyLight.visible = true
+
+func _begin_giyu_encounter() -> void:
+	if giyu_encounter.started or objective_tracker.current_step >= FIND_SHIZU_STEP:
+		return
+	is_cinematic = true
+	_set_step(GIYU_STEP)
+	giyu_encounter.start_encounter()
+
+func _on_giyu_encounter_completed() -> void:
+	_set_step(FIND_SHIZU_STEP)
+	is_cinematic = false
+	_checkpoint("Giyu encounter complete - checkpoint saved")
 
 func _on_objective_changed(text: String, _step: int) -> void:
 	objective_label.text = "OBJECTIVE\n%s" % text

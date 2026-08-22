@@ -58,9 +58,11 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func _update_vertical_velocity(delta: float) -> void:
+	var combat_controller: Node = get_node_or_null("CombatController")
+	var combat_is_active := combat_controller != null and bool(combat_controller.get("enabled"))
 	if not is_on_floor():
 		velocity.y -= gravity * delta
-	elif Input.is_action_just_pressed("jump"):
+	elif controls_enabled and not combat_is_active and Input.is_action_just_pressed("jump"):
 		velocity.y = jump_velocity
 	else:
 		velocity.y = -0.1

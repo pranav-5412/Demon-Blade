@@ -1,10 +1,16 @@
-[gd_scene load_steps=43 format=3]
+[gd_scene load_steps=61 format=3]
 
 [ext_resource type="Script" path="res://scenes/episode_01/chapter_01_last_normal_day.gd" id="1_chapter"]
 [ext_resource type="Script" path="res://player/third_person_player.gd" id="2_player"]
 [ext_resource type="Script" path="res://systems/objective_tracker.gd" id="3_objective"]
 [ext_resource type="Script" path="res://systems/chapter_interactable.gd" id="4_interactable"]
 [ext_resource type="Script" path="res://systems/companion_breath.gd" id="5_breath"]
+[ext_resource type="Script" path="res://combat/player_combat_controller.gd" id="6_player_combat"]
+[ext_resource type="Script" path="res://combat/combatant.gd" id="7_combatant"]
+[ext_resource type="Script" path="res://combat/combat_hitbox.gd" id="8_hitbox"]
+[ext_resource type="Script" path="res://combat/combat_hurtbox.gd" id="9_hurtbox"]
+[ext_resource type="Script" path="res://combat/giyu_controller.gd" id="10_giyu_controller"]
+[ext_resource type="Script" path="res://scenes/episode_01/giyu_encounter.gd" id="11_giyu_encounter"]
 
 [sub_resource type="Environment" id="Environment_world"]
 background_mode = 1
@@ -29,7 +35,7 @@ size = Vector3(110, 1, 110)
 albedo_color = Color(0.36, 0.27, 0.16, 1)
 [sub_resource type="BoxMesh" id="Mesh_path"]
 material = SubResource("Mat_path")
-size = Vector3(5, 0.12, 42)
+size = Vector3(5, 0.12, 80)
 
 [sub_resource type="StandardMaterial3D" id="Mat_wood"]
 albedo_color = Color(0.31, 0.16, 0.075, 1)
@@ -145,6 +151,45 @@ material = SubResource("Mat_family")
 top_radius = 0.09
 bottom_radius = 0.11
 height = 0.65
+[sub_resource type="SphereShape3D" id="Shape_combat_hitbox"]
+radius = 0.85
+[sub_resource type="CapsuleShape3D" id="Shape_combat_hurtbox"]
+radius = 0.42
+height = 1.9
+[sub_resource type="StandardMaterial3D" id="Mat_giyu"]
+albedo_color = Color(0.08, 0.18, 0.32, 1)
+[sub_resource type="CapsuleMesh" id="Mesh_giyu_body"]
+material = SubResource("Mat_giyu")
+radius = 0.37
+height = 1.35
+[sub_resource type="StandardMaterial3D" id="Mat_giyu_skin"]
+albedo_color = Color(0.62, 0.43, 0.32, 1)
+[sub_resource type="SphereMesh" id="Mesh_giyu_head"]
+material = SubResource("Mat_giyu_skin")
+radius = 0.3
+height = 0.6
+[sub_resource type="StandardMaterial3D" id="Mat_sword"]
+albedo_color = Color(0.62, 0.7, 0.78, 1)
+metallic = 0.75
+[sub_resource type="BoxMesh" id="Mesh_sword"]
+material = SubResource("Mat_sword")
+size = Vector3(0.09, 1.5, 0.06)
+[sub_resource type="StandardMaterial3D" id="Mat_rock"]
+albedo_color = Color(0.3, 0.31, 0.34, 1)
+roughness = 1.0
+[sub_resource type="SphereMesh" id="Mesh_rock"]
+material = SubResource("Mat_rock")
+radius = 0.3
+height = 0.52
+[sub_resource type="StandardMaterial3D" id="Mat_near_miss"]
+albedo_color = Color(0.7, 0.88, 1, 0.62)
+emission_enabled = true
+emission = Color(0.25, 0.6, 1, 1)
+transparency = 1
+[sub_resource type="SphereMesh" id="Mesh_near_miss"]
+material = SubResource("Mat_near_miss")
+radius = 0.55
+height = 1.1
 
 [node name="Chapter01LastNormalDay" type="Node3D"]
 script = ExtResource("1_chapter")
@@ -169,7 +214,7 @@ mesh = SubResource("Mesh_ground")
 position = Vector3(0, -0.5, 0)
 shape = SubResource("Shape_ground")
 [node name="MountainPath" type="MeshInstance3D" parent="."]
-position = Vector3(0, 0.06, -14)
+position = Vector3(0, 0.06, -27)
 mesh = SubResource("Mesh_path")
 
 [node name="House" type="StaticBody3D" parent="."]
@@ -418,6 +463,84 @@ rotation_degrees = Vector3(70, 0, -18)
 visible = false
 [node name="Body" type="MeshInstance3D" parent="Player/CarriedNezuko"]
 mesh = SubResource("Mesh_nezuko")
+[node name="CombatController" type="Node3D" parent="Player"]
+script = ExtResource("6_player_combat")
+[node name="Combatant" type="Node" parent="Player/CombatController"]
+script = ExtResource("7_combatant")
+[node name="Hitbox" type="Area3D" parent="Player/CombatController"]
+position = Vector3(0, 0.45, -1.0)
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("8_hitbox")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/CombatController/Hitbox"]
+shape = SubResource("Shape_combat_hitbox")
+[node name="Hurtbox" type="Area3D" parent="Player/CombatController"]
+position = Vector3(0, 0.1, 0)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("9_hurtbox")
+combatant_path = NodePath("../Combatant")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/CombatController/Hurtbox"]
+shape = SubResource("Shape_combat_hurtbox")
+
+[node name="GiyuEncounter" type="Node3D" parent="."]
+script = ExtResource("11_giyu_encounter")
+[node name="Giyu" type="Node3D" parent="GiyuEncounter"]
+position = Vector3(0, 1, -55)
+visible = false
+[node name="Body" type="MeshInstance3D" parent="GiyuEncounter/Giyu"]
+position = Vector3(0, -0.15, 0)
+mesh = SubResource("Mesh_giyu_body")
+[node name="Head" type="MeshInstance3D" parent="GiyuEncounter/Giyu"]
+position = Vector3(0, 0.75, 0)
+mesh = SubResource("Mesh_giyu_head")
+[node name="Sword" type="Node3D" parent="GiyuEncounter/Giyu"]
+position = Vector3(0.52, 0.25, -0.05)
+rotation_degrees = Vector3(0, 0, -18)
+[node name="Blade" type="MeshInstance3D" parent="GiyuEncounter/Giyu/Sword"]
+position = Vector3(0, 0.62, 0)
+mesh = SubResource("Mesh_sword")
+[node name="Controller" type="Node3D" parent="GiyuEncounter/Giyu"]
+script = ExtResource("10_giyu_controller")
+[node name="Combatant" type="Node" parent="GiyuEncounter/Giyu/Controller"]
+script = ExtResource("7_combatant")
+max_health = 500.0
+guard_damage_multiplier = 0.0
+[node name="Hurtbox" type="Area3D" parent="GiyuEncounter/Giyu/Controller"]
+position = Vector3(0, 0.1, 0)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("9_hurtbox")
+combatant_path = NodePath("../Combatant")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GiyuEncounter/Giyu/Controller/Hurtbox"]
+shape = SubResource("Shape_combat_hurtbox")
+[node name="SafeNezuko" type="Node3D" parent="GiyuEncounter"]
+position = Vector3(3, 0.45, -50)
+rotation_degrees = Vector3(0, 0, 78)
+visible = false
+script = ExtResource("5_breath")
+[node name="Body" type="MeshInstance3D" parent="GiyuEncounter/SafeNezuko"]
+mesh = SubResource("Mesh_nezuko")
+[node name="Axe" type="Node3D" parent="GiyuEncounter"]
+visible = false
+[node name="Handle" type="MeshInstance3D" parent="GiyuEncounter/Axe"]
+mesh = SubResource("Mesh_family_limb")
+[node name="Blade" type="MeshInstance3D" parent="GiyuEncounter/Axe"]
+position = Vector3(0.22, 0.27, 0)
+scale = Vector3(1.7, 0.42, 1.0)
+mesh = SubResource("Mesh_sword")
+[node name="Rock" type="MeshInstance3D" parent="GiyuEncounter"]
+visible = false
+mesh = SubResource("Mesh_rock")
+[node name="NearMissVFX" type="MeshInstance3D" parent="GiyuEncounter"]
+visible = false
+mesh = SubResource("Mesh_near_miss")
+[node name="ShizuRouteMarker" type="Node3D" parent="GiyuEncounter"]
+position = Vector3(0, 0.5, -63)
+visible = false
+[node name="Marker" type="MeshInstance3D" parent="GiyuEncounter/ShizuRouteMarker"]
+position = Vector3(0, 1.2, 0)
+mesh = SubResource("Mesh_marker")
 
 [node name="ObjectiveTracker" type="Node" parent="."]
 script = ExtResource("3_objective")
@@ -436,6 +559,59 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.02, 0.03, 0.08, 0.3)
 mouse_filter = 2
+visible = false
+[node name="TutorialLabel" type="Label" parent="HUD"]
+unique_name_in_owner = true
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 92.0
+offset_bottom = 138.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.92, 0.88, 0.68, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 22
+text = "Combat tutorial"
+horizontal_alignment = 1
+visible = false
+[node name="LockOnLabel" type="Label" parent="HUD"]
+unique_name_in_owner = true
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -30.0
+offset_top = -34.0
+offset_right = 30.0
+offset_bottom = 34.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.35, 0.75, 1, 1)
+theme_override_font_sizes/font_size = 34
+text = "LOCK"
+horizontal_alignment = 1
+vertical_alignment = 1
+visible = false
+[node name="MilestoneLabel" type="Label" parent="HUD"]
+unique_name_in_owner = true
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -40.0
+offset_right = 260.0
+offset_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.92, 0.84, 0.55, 1)
+theme_override_font_sizes/font_size = 28
+text = "GIYU ENCOUNTER COMPLETE"
+horizontal_alignment = 1
+vertical_alignment = 1
 visible = false
 [node name="Name" type="Label" parent="HUD"]
 offset_left = 24.0
