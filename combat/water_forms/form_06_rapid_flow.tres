@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="WaterFormData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://combat/water_form_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+form_number = 6
+ability_name = "Sixth Form: Rushing Stream"
+input_action = &"ability_6"
+gameplay_role = "rapid"
+stamina_cost = 28.0
+breath_cost = 34.0
+cooldown = 4.0
+damage = 10.0
+hitbox_scale = Vector3(1.35, 1.0, 1.65)
+active_time = 0.12
+vfx_hook = &"rapid_water_flashes"
+camera_feedback_hook = &"rapid_impulses"

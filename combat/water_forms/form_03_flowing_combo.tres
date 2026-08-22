@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="WaterFormData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://combat/water_form_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+form_number = 3
+ability_name = "Third Form: River Sequence"
+input_action = &"ability_3"
+gameplay_role = "combo"
+stamina_cost = 20.0
+breath_cost = 24.0
+cooldown = 2.0
+damage = 12.0
+movement_distance = 2.1
+hitbox_scale = Vector3(1.1, 1.0, 1.5)
+active_time = 0.17
+vfx_hook = &"flowing_combo_trails"

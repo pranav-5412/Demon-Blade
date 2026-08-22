@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="WaterFormData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://combat/water_form_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+form_number = 5
+ability_name = "Fifth Form: Still Pool"
+input_action = &"ability_5"
+gameplay_role = "counter"
+stamina_cost = 8.0
+breath_cost = 18.0
+cooldown = 3.0
+damage = 14.0
+hitbox_scale = Vector3(1.5, 1.2, 1.5)
+active_time = 0.28
+vfx_hook = &"calm_counter_ring"
+camera_feedback_hook = &"counter_focus"

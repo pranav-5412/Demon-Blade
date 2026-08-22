@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="WaterFormData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://combat/water_form_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+form_number = 1
+ability_name = "First Form: Current Step"
+input_action = &"ability_1"
+gameplay_role = "dash"
+stamina_cost = 10.0
+breath_cost = 14.0
+cooldown = 0.8
+damage = 24.0
+movement_distance = 4.5
+hitbox_scale = Vector3(1.0, 1.0, 1.6)
+vfx_hook = &"forward_water_ribbon"

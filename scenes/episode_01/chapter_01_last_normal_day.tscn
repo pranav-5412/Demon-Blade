@@ -1,4 +1,4 @@
-[gd_scene load_steps=61 format=3]
+[gd_scene load_steps=62 format=3]
 
 [ext_resource type="Script" path="res://scenes/episode_01/chapter_01_last_normal_day.gd" id="1_chapter"]
 [ext_resource type="Script" path="res://player/third_person_player.gd" id="2_player"]
@@ -91,6 +91,8 @@ material = SubResource("Mat_marker")
 top_radius = 0.22
 bottom_radius = 0.22
 height = 1.0
+[sub_resource type="BoxShape3D" id="Shape_shizu_route"]
+size = Vector3(5, 3, 5)
 
 [sub_resource type="CapsuleShape3D" id="Shape_player"]
 radius = 0.35
@@ -541,6 +543,12 @@ visible = false
 [node name="Marker" type="MeshInstance3D" parent="GiyuEncounter/ShizuRouteMarker"]
 position = Vector3(0, 1.2, 0)
 mesh = SubResource("Mesh_marker")
+[node name="RouteArea" type="Area3D" parent="GiyuEncounter/ShizuRouteMarker"]
+collision_layer = 0
+collision_mask = 1
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GiyuEncounter/ShizuRouteMarker/RouteArea"]
+position = Vector3(0, 1.3, 0)
+shape = SubResource("Shape_shizu_route")
 
 [node name="ObjectiveTracker" type="Node" parent="."]
 script = ExtResource("3_objective")

@@ -1,6 +1,8 @@
 class_name CombatHitbox
 extends Area3D
 
+signal hit_landed(target: CombatHurtbox)
+
 @export var damage: float = 10.0
 @export var can_stagger: bool = true
 
@@ -27,3 +29,4 @@ func _on_area_entered(area: Area3D) -> void:
 		return
 	already_hit.append(hurtbox)
 	hurtbox.receive_hit(self)
+	hit_landed.emit(hurtbox)

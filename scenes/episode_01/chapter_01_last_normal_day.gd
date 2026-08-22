@@ -7,6 +7,8 @@ const CARRY_STEP := 3
 const GIYU_STEP := 4
 const FIND_SHIZU_STEP := 5
 const COMPLETE_STEP := FIND_SHIZU_STEP
+const JOURNEY_SCENE := "res://scenes/episode_01/journey_to_shizu.tscn"
+const TRAINING_SCENE := "res://scenes/episode_01/shizu_training.tscn"
 
 const OBJECTIVES := [
 	"Go to the wood chopping area.",
@@ -37,12 +39,18 @@ const OBJECTIVES := [
 @onready var family_scene: Node3D = $FamilyScene
 @onready var cinematic_shade: ColorRect = %CinematicShade
 @onready var giyu_encounter: GiyuEncounter = $GiyuEncounter
+@onready var shizu_route_area: Area3D = $GiyuEncounter/ShizuRouteMarker/RouteArea
 
 var active_interactable: ChapterInteractable
 var is_chopping: bool = false
 var is_cinematic: bool = false
+var journey_transition_started: bool = false
 
 func _ready() -> void:
+	if SaveManager.load_save() and GameManager.save_data.current_scene in [JOURNEY_SCENE, TRAINING_SCENE]:
+		call_deferred("_resume_saved_scene", GameManager.save_data.current_scene)
+		return
+	GameManager.set_game_state(GameManager.GameState.GAMEPLAY)
 	player.interact_pressed.connect(_on_player_interact_pressed)
 	objective_tracker.objective_changed.connect(_on_objective_changed)
 	wood_area.activated.connect(_on_interactable_activated)
@@ -54,6 +62,9 @@ func _ready() -> void:
 	await get_tree().create_timer(3.0).timeout
 	intro_panel.visible = false
 
+func _resume_saved_scene(scene_path: String) -> void:
+	SceneManager.transition_to(scene_path)
+
 func _process(_delta: float) -> void:
 	active_interactable = _find_active_interactable()
 	interaction_label.visible = active_interactable != null and not is_chopping and not is_cinematic and objective_tracker.current_step < COMPLETE_STEP
@@ -61,6 +72,8 @@ func _process(_delta: float) -> void:
 		interaction_label.text = active_interactable.prompt_text
 	if objective_tracker.current_step in [CARRY_STEP, GIYU_STEP] and descent_area.is_player_nearby(player) and not giyu_encounter.started:
 		_begin_giyu_encounter()
+	if objective_tracker.current_step == FIND_SHIZU_STEP and shizu_route_area.overlaps_body(player) and not journey_transition_started:
+		_begin_journey_to_shizu()
 
 func _find_active_interactable() -> ChapterInteractable:
 	var candidates: Array[ChapterInteractable] = [wood_area, delivery_area, home_area, descent_area]
@@ -208,6 +221,15 @@ func _on_giyu_encounter_completed() -> void:
 	_set_step(FIND_SHIZU_STEP)
 	is_cinematic = false
 	_checkpoint("Giyu encounter complete - checkpoint saved")
+
+func _begin_journey_to_shizu() -> void:
+	journey_transition_started = true
+	var data := GameManager.save_data
+	data.story_flags["journey_to_shizu_started"] = true
+	data.current_scene = "res://scenes/episode_01/journey_to_shizu.tscn"
+	data.player_position = Vector3(0.0, 1.0, 20.0)
+	_checkpoint("Mountain route found - checkpoint saved")
+	SceneManager.transition_to("res://scenes/episode_01/journey_to_shizu.tscn")
 
 func _on_objective_changed(text: String, _step: int) -> void:
 	objective_label.text = "OBJECTIVE\n%s" % text

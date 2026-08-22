@@ -1,0 +1,173 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scenes/episode_01/journey_to_shizu.gd" id="1_journey"]
+[ext_resource type="Script" path="res://player/third_person_player.gd" id="2_player"]
+
+[sub_resource type="Environment" id="Environment_journey"]
+background_mode = 1
+background_color = Color(0.10, 0.15, 0.20, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.46, 0.55, 0.62, 1)
+ambient_light_energy = 0.58
+fog_enabled = true
+fog_light_color = Color(0.43, 0.51, 0.57, 1)
+fog_density = 0.012
+
+[sub_resource type="CapsuleShape3D" id="Shape_player"]
+radius = 0.35
+height = 1.8
+[sub_resource type="StandardMaterial3D" id="Mat_player"]
+albedo_color = Color(0.13, 0.4, 0.32, 1)
+[sub_resource type="CapsuleMesh" id="Mesh_player"]
+material = SubResource("Mat_player")
+radius = 0.35
+height = 1.25
+[sub_resource type="StandardMaterial3D" id="Mat_head"]
+albedo_color = Color(0.82, 0.57, 0.4, 1)
+[sub_resource type="SphereMesh" id="Mesh_head"]
+material = SubResource("Mat_head")
+radius = 0.3
+height = 0.6
+[sub_resource type="StandardMaterial3D" id="Mat_nezuko"]
+albedo_color = Color(0.5, 0.12, 0.25, 1)
+[sub_resource type="CapsuleMesh" id="Mesh_nezuko"]
+material = SubResource("Mat_nezuko")
+radius = 0.28
+height = 1.15
+[sub_resource type="StandardMaterial3D" id="Mat_shizu"]
+albedo_color = Color(0.48, 0.43, 0.30, 1)
+[sub_resource type="CapsuleMesh" id="Mesh_shizu_body"]
+material = SubResource("Mat_shizu")
+radius = 0.39
+height = 1.4
+[sub_resource type="StandardMaterial3D" id="Mat_shizu_head"]
+albedo_color = Color(0.57, 0.42, 0.30, 1)
+[sub_resource type="SphereMesh" id="Mesh_shizu_head"]
+material = SubResource("Mat_shizu_head")
+radius = 0.29
+height = 0.58
+[sub_resource type="BoxShape3D" id="Shape_detour"]
+size = Vector3(24, 3, 8)
+[sub_resource type="BoxShape3D" id="Shape_arrival"]
+size = Vector3(18, 4, 12)
+[sub_resource type="SphereShape3D" id="Shape_training_start"]
+radius = 3.6
+
+[node name="JourneyToShizu" type="Node3D"]
+script = ExtResource("1_journey")
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_journey")
+[node name="Moonlight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -35, 0)
+light_color = Color(0.72, 0.81, 0.92, 1)
+light_energy = 1.15
+shadow_enabled = true
+[node name="JourneyWorld" type="Node3D" parent="."]
+[node name="JourneyTriggers" type="Node3D" parent="."]
+[node name="DetourCheckpoint" type="Area3D" parent="JourneyTriggers"]
+position = Vector3(17, 1.5, -117)
+collision_layer = 0
+collision_mask = 1
+[node name="CollisionShape3D" type="CollisionShape3D" parent="JourneyTriggers/DetourCheckpoint"]
+shape = SubResource("Shape_detour")
+[node name="ShizuArrival" type="Area3D" parent="JourneyTriggers"]
+position = Vector3(14, 15, -676)
+collision_layer = 0
+collision_mask = 1
+[node name="CollisionShape3D" type="CollisionShape3D" parent="JourneyTriggers/ShizuArrival"]
+shape = SubResource("Shape_arrival")
+
+[node name="Player" type="CharacterBody3D" parent="."]
+position = Vector3(0, 1, 20)
+collision_layer = 1
+collision_mask = 1
+script = ExtResource("2_player")
+[node name="Collision" type="CollisionShape3D" parent="Player"]
+shape = SubResource("Shape_player")
+[node name="Visual" type="Node3D" parent="Player"]
+[node name="Body" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0, -0.2, 0)
+mesh = SubResource("Mesh_player")
+[node name="Head" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0, 0.65, 0)
+mesh = SubResource("Mesh_head")
+[node name="CameraPivot" type="Node3D" parent="Player"]
+position = Vector3(0, 0.65, 0)
+rotation_degrees = Vector3(-12, 0, 0)
+[node name="SpringArm3D" type="SpringArm3D" parent="Player/CameraPivot"]
+spring_length = 4.5
+margin = 0.15
+[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D"]
+current = true
+[node name="CarriedNezuko" type="Node3D" parent="Player"]
+position = Vector3(0.45, 0.55, 0.35)
+rotation_degrees = Vector3(70, 0, -18)
+visible = true
+[node name="Body" type="MeshInstance3D" parent="Player/CarriedNezuko"]
+mesh = SubResource("Mesh_nezuko")
+[node name="CinematicCamera" type="Camera3D" parent="."]
+[node name="Shizu" type="Node3D" parent="."]
+position = Vector3(14, 13.7, -690)
+[node name="Body" type="MeshInstance3D" parent="Shizu"]
+mesh = SubResource("Mesh_shizu_body")
+[node name="Head" type="MeshInstance3D" parent="Shizu"]
+position = Vector3(0, 0.82, 0)
+mesh = SubResource("Mesh_shizu_head")
+[node name="Hut" type="Node3D" parent="Shizu"]
+[node name="TrainingStartArea" type="Area3D" parent="Shizu"]
+position = Vector3(0, 1.0, 3.0)
+collision_layer = 0
+collision_mask = 1
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Shizu/TrainingStartArea"]
+shape = SubResource("Shape_training_start")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+[node name="StatusLabel" type="Label" parent="HUD"]
+offset_left = 36.0
+offset_top = 36.0
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_font_sizes/font_size = 24
+text = "TANJIRO\nHealth: 100\nStamina: 100"
+[node name="ObjectiveLabel" type="Label" parent="HUD"]
+offset_left = 36.0
+offset_top = 190.0
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_font_sizes/font_size = 26
+text = "OBJECTIVE\nFind Shizu."
+[node name="DialogueLabel" type="Label" parent="HUD"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 770.0
+offset_bottom = 845.0
+theme_override_colors/font_color = Color(1, 0.94, 0.72, 1)
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 1
+autowrap_mode = 2
+[node name="CheckpointLabel" type="Label" parent="HUD"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 690.0
+offset_bottom = 730.0
+theme_override_colors/font_color = Color(0.78, 0.9, 0.78, 1)
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+visible = false
+[node name="MilestoneLabel" type="Label" parent="HUD"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 104.0
+offset_bottom = 150.0
+theme_override_colors/font_color = Color(0.92, 0.81, 0.48, 1)
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
+visible = false
+[node name="InteractionLabel" type="Label" parent="HUD"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 640.0
+offset_bottom = 680.0
+theme_override_colors/font_color = Color(0.95, 0.88, 0.62, 1)
+theme_override_font_sizes/font_size = 24
+text = "Press E to begin Shizu's training"
+horizontal_alignment = 1
+visible = false

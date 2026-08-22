@@ -49,6 +49,9 @@ ability_1={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":4
 ability_2={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":50)]}
 ability_3={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":51)]}
 ability_4={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":52)]}
+ability_5={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":53)]}
+ability_6={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":54)]}
+ability_7={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":55)]}
 switch_character={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":84)]}
 pause={"deadzone": 0.5, "events": [Object(InputEventKey,"physical_keycode":4194305)]}
 

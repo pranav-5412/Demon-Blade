@@ -1,0 +1,221 @@
+[gd_scene load_steps=30 format=3]
+
+[ext_resource type="Script" path="res://scenes/episode_01/shizu_training.gd" id="1_training"]
+[ext_resource type="Script" path="res://player/third_person_player.gd" id="2_player"]
+[ext_resource type="Script" path="res://combat/player_combat_controller.gd" id="3_combat"]
+[ext_resource type="Script" path="res://combat/combatant.gd" id="4_combatant"]
+[ext_resource type="Script" path="res://combat/combat_hitbox.gd" id="5_hitbox"]
+[ext_resource type="Script" path="res://combat/combat_hurtbox.gd" id="6_hurtbox"]
+[ext_resource type="Script" path="res://combat/breathing_controller.gd" id="7_breathing"]
+[ext_resource type="Script" path="res://combat/water_breathing_controller.gd" id="8_water"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_01_dash_slash.tres" id="9_form1"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_02_spinning_defense.tres" id="10_form2"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_03_flowing_combo.tres" id="11_form3"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_04_wave_arc.tres" id="12_form4"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_05_calm_counter.tres" id="13_form5"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_06_rapid_flow.tres" id="14_form6"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_07_precision_thrust.tres" id="15_form7"]
+
+[sub_resource type="Environment" id="Environment_training"]
+background_mode = 1
+background_color = Color(0.12, 0.18, 0.22, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.55, 0.65, 0.7, 1)
+ambient_light_energy = 0.72
+fog_enabled = true
+fog_light_color = Color(0.48, 0.57, 0.62, 1)
+fog_density = 0.006
+[sub_resource type="CapsuleShape3D" id="Shape_player"]
+radius = 0.35
+height = 1.8
+[sub_resource type="StandardMaterial3D" id="Mat_player"]
+albedo_color = Color(0.13, 0.4, 0.32, 1)
+[sub_resource type="CapsuleMesh" id="Mesh_player"]
+material = SubResource("Mat_player")
+radius = 0.35
+height = 1.25
+[sub_resource type="StandardMaterial3D" id="Mat_head"]
+albedo_color = Color(0.82, 0.57, 0.4, 1)
+[sub_resource type="SphereMesh" id="Mesh_head"]
+material = SubResource("Mat_head")
+radius = 0.3
+height = 0.6
+[sub_resource type="SphereShape3D" id="Shape_hitbox"]
+radius = 0.85
+[sub_resource type="BoxShape3D" id="Shape_form_hitbox"]
+size = Vector3(1.4, 1.5, 1.8)
+[sub_resource type="CapsuleShape3D" id="Shape_hurtbox"]
+radius = 0.42
+height = 1.9
+[sub_resource type="StandardMaterial3D" id="Mat_shizu"]
+albedo_color = Color(0.48, 0.43, 0.3, 1)
+[sub_resource type="CapsuleMesh" id="Mesh_shizu"]
+material = SubResource("Mat_shizu")
+radius = 0.39
+height = 1.4
+[sub_resource type="StandardMaterial3D" id="Mat_nezuko"]
+albedo_color = Color(0.5, 0.12, 0.25, 1)
+[sub_resource type="CapsuleMesh" id="Mesh_nezuko"]
+material = SubResource("Mat_nezuko")
+radius = 0.28
+height = 1.15
+[sub_resource type="StandardMaterial3D" id="Mat_wood"]
+albedo_color = Color(0.3, 0.14, 0.05, 1)
+[sub_resource type="CylinderMesh" id="Mesh_log"]
+material = SubResource("Mat_wood")
+top_radius = 0.35
+bottom_radius = 0.35
+height = 7.0
+[sub_resource type="StandardMaterial3D" id="Mat_warning"]
+albedo_color = Color(0.95, 0.25, 0.08, 0.55)
+transparency = 1
+emission_enabled = true
+emission = Color(0.7, 0.08, 0.01, 1)
+[sub_resource type="CylinderMesh" id="Mesh_warning"]
+material = SubResource("Mat_warning")
+top_radius = 2.5
+bottom_radius = 2.5
+height = 0.04
+
+[node name="ShizuTraining" type="Node3D"]
+script = ExtResource("1_training")
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_training")
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -32, 0)
+light_color = Color(0.82, 0.88, 0.92, 1)
+light_energy = 1.25
+shadow_enabled = true
+
+[node name="TrainingGround" type="Node3D" parent="."]
+[node name="Ground" type="MeshInstance3D" parent="TrainingGround"]
+position = Vector3(0, -0.5, -6)
+[node name="GroundBody" type="StaticBody3D" parent="TrainingGround"]
+position = Vector3(0, -0.5, -6)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="TrainingGround/GroundBody"]
+
+[node name="Player" type="CharacterBody3D" parent="."]
+position = Vector3(0, 1, 14)
+script = ExtResource("2_player")
+[node name="Collision" type="CollisionShape3D" parent="Player"]
+shape = SubResource("Shape_player")
+[node name="Visual" type="Node3D" parent="Player"]
+[node name="Body" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0, -0.2, 0)
+mesh = SubResource("Mesh_player")
+[node name="Head" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0, 0.65, 0)
+mesh = SubResource("Mesh_head")
+[node name="CameraPivot" type="Node3D" parent="Player"]
+position = Vector3(0, 0.65, 0)
+rotation_degrees = Vector3(-12, 0, 0)
+[node name="SpringArm3D" type="SpringArm3D" parent="Player/CameraPivot"]
+spring_length = 4.5
+margin = 0.15
+[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D"]
+current = true
+[node name="CombatController" type="Node3D" parent="Player"]
+script = ExtResource("3_combat")
+[node name="Combatant" type="Node" parent="Player/CombatController"]
+script = ExtResource("4_combatant")
+[node name="Hitbox" type="Area3D" parent="Player/CombatController"]
+position = Vector3(0, 0.45, -1.0)
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("5_hitbox")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/CombatController/Hitbox"]
+shape = SubResource("Shape_hitbox")
+[node name="Hurtbox" type="Area3D" parent="Player/CombatController"]
+position = Vector3(0, 0.1, 0)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("6_hurtbox")
+combatant_path = NodePath("../Combatant")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/CombatController/Hurtbox"]
+shape = SubResource("Shape_hurtbox")
+[node name="BreathingController" type="Node" parent="Player"]
+script = ExtResource("7_breathing")
+[node name="WaterBreathingController" type="Node3D" parent="Player"]
+script = ExtResource("8_water")
+forms = [ExtResource("9_form1"), ExtResource("10_form2"), ExtResource("11_form3"), ExtResource("12_form4"), ExtResource("13_form5"), ExtResource("14_form6"), ExtResource("15_form7")]
+hitbox_path = NodePath("FormHitbox")
+breathing_path = NodePath("../BreathingController")
+combatant_path = NodePath("../CombatController/Combatant")
+[node name="FormHitbox" type="Area3D" parent="Player/WaterBreathingController"]
+position = Vector3(0, 0.45, -1.2)
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("5_hitbox")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/WaterBreathingController/FormHitbox"]
+shape = SubResource("Shape_form_hitbox")
+
+[node name="Shizu" type="Node3D" parent="."]
+position = Vector3(7, 0.7, 9)
+[node name="Body" type="MeshInstance3D" parent="Shizu"]
+mesh = SubResource("Mesh_shizu")
+[node name="NezukoRest" type="Node3D" parent="."]
+position = Vector3(9, 0.7, 9)
+rotation_degrees = Vector3(0, 0, 78)
+[node name="Body" type="MeshInstance3D" parent="NezukoRest"]
+mesh = SubResource("Mesh_nezuko")
+[node name="CinematicCamera" type="Camera3D" parent="."]
+
+[node name="TrainingFeatures" type="Node3D" parent="."]
+[node name="SwingingLog" type="Node3D" parent="TrainingFeatures"]
+position = Vector3(0, 2.3, -4)
+[node name="Log" type="MeshInstance3D" parent="TrainingFeatures/SwingingLog"]
+rotation_degrees = Vector3(0, 0, 90)
+mesh = SubResource("Mesh_log")
+[node name="HazardTelegraph" type="MeshInstance3D" parent="TrainingFeatures"]
+position = Vector3(0, 0.04, -4)
+mesh = SubResource("Mesh_warning")
+[node name="Dummies" type="Node3D" parent="TrainingFeatures"]
+
+[node name="CheckpointSets" type="Node3D" parent="."]
+[node name="Endurance" type="Node3D" parent="CheckpointSets"]
+[node name="Breathing" type="Node3D" parent="CheckpointSets"]
+[node name="FinalCourse" type="Node3D" parent="CheckpointSets"]
+
+[node name="HUD" type="CanvasLayer" parent="."]
+[node name="StatusLabel" type="Label" parent="HUD"]
+offset_left = 30.0
+offset_top = 28.0
+theme_override_font_sizes/font_size = 22
+text = "TANJIRO\nHealth: 100\nStamina: 100"
+[node name="ObjectiveLabel" type="Label" parent="HUD"]
+offset_left = 30.0
+offset_top = 160.0
+offset_right = 620.0
+offset_bottom = 250.0
+theme_override_font_sizes/font_size = 23
+autowrap_mode = 2
+text = "OBJECTIVE\nComplete Shizu's training."
+[node name="BreathingLabel" type="Label" parent="HUD"]
+offset_left = 30.0
+offset_top = 275.0
+theme_override_colors/font_color = Color(0.2, 0.78, 1, 1)
+theme_override_font_sizes/font_size = 21
+text = "BREATH: LOCKED"
+[node name="FormLabel" type="Label" parent="HUD"]
+offset_left = 30.0
+offset_top = 315.0
+offset_right = 650.0
+theme_override_font_sizes/font_size = 19
+text = "WATER FORMS: LOCKED"
+[node name="FeedbackLabel" type="Label" parent="HUD"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 95.0
+offset_bottom = 140.0
+theme_override_colors/font_color = Color(0.92, 0.82, 0.48, 1)
+theme_override_font_sizes/font_size = 25
+horizontal_alignment = 1
+[node name="DialogueLabel" type="Label" parent="HUD"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 760.0
+offset_bottom = 840.0
+theme_override_colors/font_color = Color(1, 0.94, 0.72, 1)
+theme_override_font_sizes/font_size = 27
+horizontal_alignment = 1
+autowrap_mode = 2

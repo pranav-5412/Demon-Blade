@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="WaterFormData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://combat/water_form_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+form_number = 4
+ability_name = "Fourth Form: Broad Tide"
+input_action = &"ability_4"
+gameplay_role = "arc"
+stamina_cost = 17.0
+breath_cost = 22.0
+cooldown = 2.4
+damage = 30.0
+hitbox_scale = Vector3(2.8, 1.1, 1.6)
+active_time = 0.34
+vfx_hook = &"wide_wave_arc"

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="WaterFormData" load_steps=2 format=3]
+[ext_resource type="Script" path="res://combat/water_form_data.gd" id="1"]
+[resource]
+script = ExtResource("1")
+form_number = 7
+ability_name = "Seventh Form: Piercing Drop"
+input_action = &"ability_7"
+gameplay_role = "thrust"
+stamina_cost = 16.0
+breath_cost = 21.0
+cooldown = 1.8
+damage = 42.0
+movement_distance = 2.8
+hitbox_scale = Vector3(0.6, 0.7, 3.2)
+active_time = 0.18
+vfx_hook = &"precision_water_lance"
+camera_feedback_hook = &"precision_snap"
