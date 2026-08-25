@@ -9,6 +9,7 @@ const FIND_SHIZU_STEP := 5
 const COMPLETE_STEP := FIND_SHIZU_STEP
 const JOURNEY_SCENE := "res://scenes/episode_01/journey_to_shizu.tscn"
 const TRAINING_SCENE := "res://scenes/episode_01/shizu_training.tscn"
+const FINAL_TRAINING_SCENE := "res://scenes/episode_01/final_training_challenge.tscn"
 
 const OBJECTIVES := [
 	"Go to the wood chopping area.",
@@ -47,7 +48,7 @@ var is_cinematic: bool = false
 var journey_transition_started: bool = false
 
 func _ready() -> void:
-	if SaveManager.load_save() and GameManager.save_data.current_scene in [JOURNEY_SCENE, TRAINING_SCENE]:
+	if SaveManager.load_save() and GameManager.save_data.current_scene in [JOURNEY_SCENE, TRAINING_SCENE, FINAL_TRAINING_SCENE]:
 		call_deferred("_resume_saved_scene", GameManager.save_data.current_scene)
 		return
 	GameManager.set_game_state(GameManager.GameState.GAMEPLAY)

@@ -1,6 +1,7 @@
 extends Node3D
 
 const TRAINING_SCENE := "res://scenes/episode_01/shizu_training.tscn"
+const FINAL_TRAINING_SCENE := "res://scenes/episode_01/final_training_challenge.tscn"
 const FINAL_OBJECTIVE := "Face Shizu's final challenge."
 const DUMMY_SCENE := preload("res://combat/training_dummy.tscn")
 
@@ -67,10 +68,9 @@ func _ready() -> void:
 	current_mastery_form = clampi(int(data.story_flags.get("water_mastery_form", 1)), 1, 7)
 	_load_unlocks()
 	if bool(data.story_flags.get("training_completed", false)):
-		training_stage = 7
-		_set_objective(FINAL_OBJECTIVE)
-		feedback_label.text = "Training complete. The final challenge waits beyond this milestone."
-		feedback_label.visible = true
+		data.current_scene = FINAL_TRAINING_SCENE
+		SaveManager.save_checkpoint()
+		call_deferred("_continue_to_final_training")
 		return
 	if Engine.has_meta("skip_shizu_training_intro"):
 		_configure_stage(training_stage)
@@ -353,8 +353,13 @@ func _finish_training() -> void:
 	await _show_dialogue("Shizu: You have learned the seven forms. One final challenge remains.", 3.5)
 	feedback_label.text = "Shizu Training Complete"
 	feedback_label.visible = true
-	player.set_controls_enabled(true)
-	stage_transitioning = false
+	GameManager.save_data.current_scene = FINAL_TRAINING_SCENE
+	SaveManager.save_checkpoint()
+	await get_tree().create_timer(1.2).timeout
+	SceneManager.transition_to(FINAL_TRAINING_SCENE)
+
+func _continue_to_final_training() -> void:
+	SceneManager.transition_to(FINAL_TRAINING_SCENE)
 
 func _unlock_forms_through(max_form: int) -> void:
 	breathing.set_unlocked(true)
