@@ -4,6 +4,7 @@ signal final_slash_confirmed
 signal sound_hook_requested(hook_name: StringName)
 
 const FINAL_SCENE := "res://scenes/episode_01/final_training_challenge.tscn"
+const FINAL_SELECTION_SCENE := "res://scenes/episode_01/final_selection.tscn"
 
 enum Phase { APPROACH, FAILED_ATTEMPT, TRIAL_A, TRIAL_B, RETURN_TO_BOULDER, FINAL_CUT, COMPLETE }
 
@@ -66,7 +67,9 @@ func _process(_delta: float) -> void:
 	breathing_label.text = "BREATH: %d / %d" % [roundi(breathing.current_breath), roundi(breathing.max_breath)]
 	if phase == Phase.APPROACH and not sequence_busy and approach_area.overlaps_body(player):
 		_run_failed_attempt()
-	interaction_label.visible = phase == Phase.RETURN_TO_BOULDER and not sequence_busy and approach_area.overlaps_body(player)
+	interaction_label.visible = not sequence_busy and ((phase == Phase.RETURN_TO_BOULDER and approach_area.overlaps_body(player)) or phase == Phase.COMPLETE)
+	if phase == Phase.COMPLETE:
+		interaction_label.text = "Press E to depart for Final Selection"
 
 func _unhandled_input(event: InputEvent) -> void:
 	if awaiting_final_slash and event.is_action_pressed("ability_7"):
@@ -115,6 +118,7 @@ func _apply_saved_progress() -> void:
 		milestone_label.text = "Training Complete"
 		milestone_label.visible = true
 		trial_label.text = "The boulder remains split. Final Selection has not begun."
+		interaction_label.text = "Press E to depart for Final Selection"
 		return
 	_show_intact_state()
 	if bool(flags.get("companion_b_trial_complete", false)):
@@ -143,7 +147,8 @@ func _apply_saved_progress() -> void:
 		phase = Phase.APPROACH
 		player.global_position = Vector3(0, 1, 14)
 		player.velocity = Vector3.ZERO
-		player.look_at($Boulder.global_position + Vector3(0, 1.5, 0), Vector3.UP)
+		player.rotation.y = 0.0
+		player_camera.current = true
 		companion_a.set_manifested(false)
 		companion_b.set_manifested(false)
 		_set_objective("Approach the final boulder.")
@@ -296,7 +301,7 @@ func _start_trial_b(resuming: bool = false) -> void:
 func _on_b_telegraph(_duration: float) -> void:
 	b_dodge_during_telegraph = false
 	b_counter_ready = false
-		_show_trial_message("Fast red telegraph — press Ctrl to dodge, then close the distance for the blue opening.")
+	_show_trial_message("Fast red telegraph — press Ctrl to dodge, then close the distance for the blue opening.")
 
 func _on_b_attack_resolved(avoided: bool, _guarded: bool) -> void:
 	if phase != Phase.TRIAL_B:
@@ -372,6 +377,20 @@ func _on_form_activated(form_number: int, ability_name: String) -> void:
 func _on_player_interact_pressed() -> void:
 	if phase == Phase.RETURN_TO_BOULDER and not sequence_busy and approach_area.overlaps_body(player):
 		_run_final_cut()
+	elif phase == Phase.COMPLETE and not sequence_busy:
+		_depart_for_final_selection()
+
+func _depart_for_final_selection() -> void:
+	sequence_busy = true
+	player.set_controls_enabled(false)
+	interaction_label.visible = false
+	await _show_dialogue("Shizu: Follow the wisteria path. Beyond it, seven nights will decide whether your training can keep you alive.", 3.5)
+	GameManager.save_data.story_flags["final_selection_started"] = true
+	GameManager.save_data.story_flags["final_selection_day"] = 1
+	GameManager.save_data.current_scene = FINAL_SELECTION_SCENE
+	GameManager.save_data.player_position = Vector3(0, 1, 22)
+	SaveManager.save_checkpoint()
+	SceneManager.transition_to(FINAL_SELECTION_SCENE)
 
 func _run_final_cut() -> void:
 	if sequence_busy or phase != Phase.RETURN_TO_BOULDER:
@@ -561,7 +580,7 @@ func _build_companions() -> void:
 	companion_b = TrainingMemoryCompanion.new()
 	companion_b.name = "CompanionBSwiftEcho"
 	$Companions.add_child(companion_b)
-	var speed_positions: Array[Vector3] = [Vector3(-7, 1, -2), Vector3(7, 1, -5), Vector3(0, 1, -10), Vector3(-5, 1, -12), Vector3(6, 1, 0)]
+	var speed_positions: Array[Vector3] = [Vector3(-3, 1, -2), Vector3(3, 1, -3), Vector3(0, 1, -5), Vector3(-2.5, 1, -6), Vector3(3, 1, 0)]
 	companion_b.configure(player, player_combatant, "speed", speed_positions)
 	companion_b.telegraph_started.connect(_on_b_telegraph)
 	companion_b.attack_resolved.connect(_on_b_attack_resolved)

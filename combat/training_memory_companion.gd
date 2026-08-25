@@ -85,12 +85,12 @@ func _run_trial_loop(token: int) -> void:
 			position_index += 1
 			var move_tween := create_tween()
 			move_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-			move_tween.tween_property(self, "global_position", target_position, 0.42)
+			move_tween.tween_property(self, "global_position", target_position, 1.05)
 			await move_tween.finished
 			if not active or token != run_token:
 				return
 		_face_player()
-		var telegraph_duration := 0.58 if trial_kind == "speed" else 0.88
+		var telegraph_duration := 0.9 if trial_kind == "speed" else 0.88
 		telegraph_active = true
 		telegraph_ring.visible = true
 		telegraph_started.emit(telegraph_duration)
@@ -103,7 +103,7 @@ func _run_trial_loop(token: int) -> void:
 		telegraph_active = false
 		telegraph_ring.visible = false
 		var guarded := target_combatant.is_guarding
-		var attack_range := 4.4 if trial_kind == "speed" else 4.8
+		var attack_range := 4.8 if trial_kind == "speed" else 4.8
 		var in_range := global_position.distance_to(player.global_position) <= attack_range
 		var damaged := target_combatant.receive_damage(15.0 if trial_kind == "speed" else 18.0, true) if in_range else false
 		var avoided := not damaged
@@ -115,7 +115,7 @@ func _run_trial_loop(token: int) -> void:
 		combatant.set_invulnerable(false)
 		counter_ring.visible = true
 		counter_window_changed.emit(true)
-		await get_tree().create_timer(0.82 if trial_kind == "speed" else 1.18).timeout
+		await get_tree().create_timer(1.65 if trial_kind == "speed" else 1.18).timeout
 		if not active or token != run_token:
 			return
 		if counter_window_open:
@@ -123,7 +123,7 @@ func _run_trial_loop(token: int) -> void:
 			combatant.set_invulnerable(true)
 			counter_ring.visible = false
 			counter_window_changed.emit(false)
-		await get_tree().create_timer(0.48 if trial_kind == "speed" else 0.75).timeout
+		await get_tree().create_timer(0.75 if trial_kind == "speed" else 0.75).timeout
 
 func _face_player() -> void:
 	if not is_instance_valid(player):

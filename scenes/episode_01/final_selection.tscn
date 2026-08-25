@@ -1,0 +1,240 @@
+[gd_scene load_steps=20 format=3]
+
+[ext_resource type="Script" path="res://scenes/episode_01/final_selection.gd" id="1_scene"]
+[ext_resource type="Script" path="res://player/third_person_player.gd" id="2_player"]
+[ext_resource type="Script" path="res://combat/player_combat_controller.gd" id="3_combat"]
+[ext_resource type="Script" path="res://combat/combatant.gd" id="4_combatant"]
+[ext_resource type="Script" path="res://combat/combat_hitbox.gd" id="5_hitbox"]
+[ext_resource type="Script" path="res://combat/combat_hurtbox.gd" id="6_hurtbox"]
+[ext_resource type="Script" path="res://combat/breathing_controller.gd" id="7_breathing"]
+[ext_resource type="Script" path="res://combat/water_breathing_controller.gd" id="8_water"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_01_dash_slash.tres" id="9_f1"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_02_spinning_defense.tres" id="10_f2"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_03_flowing_combo.tres" id="11_f3"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_04_wave_arc.tres" id="12_f4"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_05_calm_counter.tres" id="13_f5"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_06_rapid_flow.tres" id="14_f6"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_07_precision_thrust.tres" id="15_f7"]
+
+[sub_resource type="Environment" id="Environment_selection"]
+background_mode = 1
+background_color = Color(0.08, 0.13, 0.18, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.28, 0.38, 0.5, 1)
+ambient_light_energy = 0.65
+fog_enabled = true
+fog_light_color = Color(0.22, 0.3, 0.36, 1)
+fog_density = 0.01
+
+[sub_resource type="CapsuleShape3D" id="PlayerShape"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="PlayerMesh"]
+radius = 0.35
+height = 1.25
+
+[sub_resource type="SphereMesh" id="HeadMesh"]
+radius = 0.3
+height = 0.6
+
+[sub_resource type="BoxMesh" id="SwordMesh"]
+size = Vector3(0.08, 1.55, 0.11)
+
+[sub_resource type="SphereShape3D" id="HitShape"]
+radius = 0.9
+
+[sub_resource type="CapsuleShape3D" id="HurtShape"]
+radius = 0.42
+height = 1.9
+
+[sub_resource type="BoxShape3D" id="FormShape"]
+size = Vector3(1.4, 1.5, 1.8)
+
+[node name="FinalSelection" type="Node3D"]
+script = ExtResource("1_scene")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_selection")
+
+[node name="MoonLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_color = Color(0.62, 0.74, 0.92, 1)
+light_energy = 1.25
+shadow_enabled = true
+
+[node name="EnvironmentGeometry" type="Node3D" parent="."]
+
+[node name="Enemies" type="Node3D" parent="."]
+
+[node name="Player" type="CharacterBody3D" parent="."]
+position = Vector3(0, 1, 22)
+script = ExtResource("2_player")
+
+[node name="Collision" type="CollisionShape3D" parent="Player"]
+shape = SubResource("PlayerShape")
+
+[node name="Visual" type="Node3D" parent="Player"]
+
+[node name="Body" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0, -0.2, 0)
+mesh = SubResource("PlayerMesh")
+
+[node name="Head" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0, 0.65, 0)
+mesh = SubResource("HeadMesh")
+
+[node name="Sword" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0.48, 0.35, -0.08)
+rotation_degrees = Vector3(0, 0, -18)
+mesh = SubResource("SwordMesh")
+
+[node name="CameraPivot" type="Node3D" parent="Player"]
+position = Vector3(0, 0.65, 0)
+rotation_degrees = Vector3(-12, 0, 0)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="Player/CameraPivot"]
+spring_length = 5.2
+margin = 0.15
+
+[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D"]
+current = true
+
+[node name="CombatController" type="Node3D" parent="Player"]
+script = ExtResource("3_combat")
+
+[node name="Combatant" type="Node" parent="Player/CombatController"]
+script = ExtResource("4_combatant")
+
+[node name="Hitbox" type="Area3D" parent="Player/CombatController"]
+position = Vector3(0, 0.45, -1)
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("5_hitbox")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/CombatController/Hitbox"]
+shape = SubResource("HitShape")
+
+[node name="Hurtbox" type="Area3D" parent="Player/CombatController"]
+position = Vector3(0, 0.1, 0)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("6_hurtbox")
+combatant_path = NodePath("../Combatant")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/CombatController/Hurtbox"]
+shape = SubResource("HurtShape")
+
+[node name="BreathingController" type="Node" parent="Player"]
+script = ExtResource("7_breathing")
+
+[node name="WaterBreathingController" type="Node3D" parent="Player"]
+script = ExtResource("8_water")
+forms = [ExtResource("9_f1"), ExtResource("10_f2"), ExtResource("11_f3"), ExtResource("12_f4"), ExtResource("13_f5"), ExtResource("14_f6"), ExtResource("15_f7")]
+hitbox_path = NodePath("FormHitbox")
+breathing_path = NodePath("../BreathingController")
+combatant_path = NodePath("../CombatController/Combatant")
+
+[node name="FormHitbox" type="Area3D" parent="Player/WaterBreathingController"]
+position = Vector3(0, 0.45, -1.2)
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("5_hitbox")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/WaterBreathingController/FormHitbox"]
+shape = SubResource("FormShape")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="StatusLabel" type="Label" parent="HUD"]
+offset_left = 28.0
+offset_top = 24.0
+theme_override_font_sizes/font_size = 21
+text = "TANJIRO\nHealth: 100\nStamina: 100\nBreath: 100 / 100"
+
+[node name="DayLabel" type="Label" parent="HUD"]
+offset_left = 820.0
+offset_top = 25.0
+offset_right = 1100.0
+theme_override_colors/font_color = Color(0.95, 0.77, 0.3, 1)
+theme_override_font_sizes/font_size = 27
+text = "DAY 1 / 7"
+
+[node name="WanLabel" type="Label" parent="HUD"]
+offset_left = 1120.0
+offset_top = 30.0
+offset_right = 1320.0
+theme_override_font_sizes/font_size = 19
+text = "WAN  0"
+
+[node name="ObjectiveLabel" type="Label" parent="HUD"]
+offset_left = 28.0
+offset_top = 185.0
+offset_right = 720.0
+offset_bottom = 300.0
+theme_override_font_sizes/font_size = 20
+autowrap_mode = 2
+text = "OBJECTIVE"
+
+[node name="FormLabel" type="Label" parent="HUD"]
+offset_left = 28.0
+offset_top = 320.0
+offset_right = 700.0
+theme_override_colors/font_color = Color(0.2, 0.78, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "ACTIVE FORM: NONE\n1–7 Water Forms • Ctrl Dodge • Q Guard"
+
+[node name="FeedbackLabel" type="Label" parent="HUD"]
+offset_left = 410.0
+offset_top = 115.0
+offset_right = 1510.0
+offset_bottom = 165.0
+theme_override_colors/font_color = Color(0.3, 0.82, 1, 1)
+theme_override_font_sizes/font_size = 19
+horizontal_alignment = 1
+visible = false
+
+[node name="InteractionLabel" type="Label" parent="HUD"]
+offset_left = 700.0
+offset_top = 830.0
+offset_right = 1220.0
+theme_override_font_sizes/font_size = 20
+text = "Press E to use medicinal herbs"
+horizontal_alignment = 1
+visible = false
+
+[node name="TitleLabel" type="Label" parent="HUD"]
+offset_left = 420.0
+offset_top = 350.0
+offset_right = 1500.0
+offset_bottom = 500.0
+theme_override_colors/font_color = Color(0.95, 0.8, 0.35, 1)
+theme_override_font_sizes/font_size = 38
+horizontal_alignment = 1
+vertical_alignment = 1
+visible = false
+
+[node name="BossPanel" type="Control" parent="HUD"]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 510.0
+offset_top = 70.0
+offset_right = 1410.0
+offset_bottom = 125.0
+visible = false
+
+[node name="BossName" type="Label" parent="HUD/BossPanel"]
+layout_mode = 0
+offset_right = 900.0
+offset_bottom = 25.0
+theme_override_font_sizes/font_size = 18
+text = "HOLLOW PEAK DEMON"
+horizontal_alignment = 1
+
+[node name="BossHealth" type="ProgressBar" parent="HUD/BossPanel"]
+layout_mode = 0
+offset_top = 29.0
+offset_right = 900.0
+offset_bottom = 54.0
+value = 100.0
+show_percentage = false
