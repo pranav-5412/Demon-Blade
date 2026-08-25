@@ -384,7 +384,7 @@ func _depart_for_final_selection() -> void:
 	sequence_busy = true
 	player.set_controls_enabled(false)
 	interaction_label.visible = false
-	await _show_dialogue("Shizu: Follow the wisteria path. Beyond it, seven nights will decide whether your training can keep you alive.", 3.5)
+	await _show_dialogue("Shizu: Follow the wisteria path. Beyond it, five nights will decide whether your training can keep you alive.", 3.5)
 	GameManager.save_data.story_flags["final_selection_started"] = true
 	GameManager.save_data.story_flags["final_selection_day"] = 1
 	GameManager.save_data.current_scene = FINAL_SELECTION_SCENE

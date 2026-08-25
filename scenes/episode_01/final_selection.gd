@@ -4,6 +4,7 @@ signal sound_hook_requested(hook_name: StringName)
 
 const FINAL_SELECTION_SCENE := "res://scenes/episode_01/final_selection.tscn"
 const DEMON_SCRIPT := preload("res://combat/demon_enemy.gd")
+const TOTAL_DAYS := 5
 const HEALTH_REGEN_DELAY := 5.0
 const HEALTH_REGEN_PER_SECOND := 1.5
 
@@ -11,24 +12,20 @@ const DAY_CONFIG := {
 	1: {"kills": 2, "marker": Vector3(0, 1, 0), "objective": "Learn the forest routes and defeat two nearby demons.", "enemies": ["standard", "standard"]},
 	2: {"kills": 3, "marker": Vector3(0, 3, -28), "objective": "Cross the rocky pass and clear its ambush.", "enemies": ["standard", "standard", "fast"]},
 	3: {"kills": 4, "marker": Vector3(-20, 5, -53), "objective": "Enter the deep forest and survive the fast hunters.", "enemies": ["fast", "fast", "standard", "ranged"]},
-	4: {"kills": 4, "marker": Vector3(0, 1, -80), "objective": "Descend into the valley and silence the ranged demons.", "enemies": ["ranged", "ranged", "brute", "standard"]},
-	5: {"kills": 4, "marker": Vector3(22, 2, -103), "objective": "Investigate the abandoned camp and defeat the elite.", "enemies": ["elite", "brute", "fast", "standard"]},
-	6: {"kills": 6, "marker": Vector3(0, 7, -130), "objective": "Reach the high ridge through the most dangerous night.", "enemies": ["elite", "brute", "ranged", "fast", "standard", "standard"]},
-	7: {"kills": 0, "marker": Vector3(0, 4, -158), "objective": "Enter the sealed region and defeat the mountain demon.", "enemies": []},
+	4: {"kills": 5, "marker": Vector3(22, 2, -103), "objective": "Descend through the valley, investigate the abandoned camp, and defeat the elite.", "enemies": ["elite", "ranged", "brute", "fast", "standard"]},
+	5: {"kills": 0, "marker": Vector3(0, 4, -158), "objective": "Cross the high ridge, enter the sealed region, and defeat the mountain demon.", "enemies": []},
 }
 
 const DAY_SPAWNS := {
 	1: [Vector3(-7, 1, 4), Vector3(8, 1, -1)],
 	2: [Vector3(-6, 3, -22), Vector3(6, 3, -29), Vector3(0, 3, -35)],
 	3: [Vector3(-27, 5, -46), Vector3(-14, 5, -50), Vector3(-24, 5, -59), Vector3(-10, 5, -58)],
-	4: [Vector3(-9, 1, -74), Vector3(10, 1, -75), Vector3(-6, 1, -86), Vector3(7, 1, -88)],
-	5: [Vector3(17, 2, -96), Vector3(27, 2, -99), Vector3(18, 2, -110), Vector3(28, 2, -108)],
-	6: [Vector3(-9, 7, -123), Vector3(8, 7, -124), Vector3(-6, 7, -134), Vector3(7, 7, -137), Vector3(0, 7, -141), Vector3(11, 7, -131)],
+	4: [Vector3(-9, 1, -74), Vector3(10, 1, -82), Vector3(17, 2, -96), Vector3(27, 2, -103), Vector3(20, 2, -110)],
 }
 
 const DAY_CHECKPOINTS := {
 	1: Vector3(0, 1, 22), 2: Vector3(0, 3, -16), 3: Vector3(-20, 5, -42),
-	4: Vector3(0, 1, -68), 5: Vector3(22, 2, -92), 6: Vector3(0, 7, -118), 7: Vector3(0, 4, -146),
+	4: Vector3(0, 1, -68), 5: Vector3(0, 4, -146),
 }
 
 @onready var player: ThirdPersonPlayer = $Player
@@ -73,7 +70,7 @@ func _ready() -> void:
 	data.chapter = maxi(data.chapter, 7)
 	data.current_scene = FINAL_SELECTION_SCENE
 	data.story_flags["final_selection_started"] = true
-	current_day = clampi(int(data.story_flags.get("final_selection_day", 1)), 1, 7)
+	current_day = clampi(int(data.story_flags.get("final_selection_day", 1)), 1, TOTAL_DAYS)
 	if bool(data.story_flags.get("final_selection_completed", false)):
 		_show_completed_state()
 		return
@@ -98,11 +95,11 @@ func _process(delta: float) -> void:
 		marker_reached = true
 		_show_feedback("Area reached. Secure the remaining threats.")
 		_update_objective()
-	if current_day < 7:
+	if current_day < TOTAL_DAYS:
 		_check_day_complete()
 	elif marker_reached and not boss_started:
 		_spawn_boss()
-	interaction_label.visible = current_day in [3, 5, 6] and not recovery_used_today and player.global_position.distance_to(_camp_position_for_day()) <= 3.5
+	interaction_label.visible = current_day in [3, 4] and not recovery_used_today and player.global_position.distance_to(_camp_position_for_day()) <= 3.5
 
 func _configure_player() -> void:
 	combat.set_combat_enabled(true)
@@ -126,7 +123,7 @@ func _play_intro() -> void:
 	day_transitioning = true
 	player.set_controls_enabled(false)
 	combat.set_combat_enabled(false)
-	title_label.text = "FINAL SELECTION\nSurvive for 7 days."
+	title_label.text = "FINAL SELECTION\nSurvive for 5 days."
 	title_label.visible = true
 	await get_tree().create_timer(2.6).timeout
 	title_label.visible = false
@@ -144,14 +141,14 @@ func _start_day(day: int, restoring: bool = false) -> void:
 	boss_started = false
 	_clear_enemies()
 	_apply_day_atmosphere(day)
-	day_label.text = "DAY %d / 7" % day
+	day_label.text = "DAY %d / %d" % [day, TOTAL_DAYS]
 	_create_objective_marker(DAY_CONFIG[day].marker)
 	if restoring:
 		player.global_position = _saved_or_checkpoint_position(day)
 	else:
 		player.global_position = DAY_CHECKPOINTS[day]
 	player.velocity = Vector3.ZERO
-	if day < 7:
+	if day < TOTAL_DAYS:
 		_spawn_day_enemies(day)
 	else:
 		_show_feedback("The boss region has opened. Follow the crimson path.")
@@ -190,7 +187,7 @@ func _spawn_boss() -> void:
 	boss_bar.value = boss.combatant.current_health
 	objective_label.text = "OBJECTIVE\nDefeat the Hollow Peak Demon."
 	GameManager.save_data.story_flags["final_selection_boss_started"] = true
-	GameManager.save_data.player_position = DAY_CHECKPOINTS[7]
+	GameManager.save_data.player_position = DAY_CHECKPOINTS[TOTAL_DAYS]
 	SaveManager.save_checkpoint()
 	_show_feedback("Its slam, sweep, charge, and shockwave all have red telegraphs.")
 
@@ -213,7 +210,7 @@ func _on_enemy_attack_landed(_enemy: Node3D) -> void:
 	sound_hook_requested.emit(&"demon_attack_hit")
 
 func _check_day_complete() -> void:
-	if day_transitioning or current_day >= 7:
+	if day_transitioning or current_day >= TOTAL_DAYS:
 		return
 	var required := int(DAY_CONFIG[current_day].kills)
 	if marker_reached and kills_this_day >= required:
@@ -274,7 +271,7 @@ func _complete_final_selection() -> void:
 	player.set_controls_enabled(false)
 	GameManager.save_data.story_flags["final_selection_boss_defeated"] = true
 	GameManager.save_data.story_flags["final_selection_completed"] = true
-	GameManager.save_data.story_flags["final_selection_day"] = 7
+	GameManager.save_data.story_flags["final_selection_day"] = TOTAL_DAYS
 	GameManager.save_data.story_flags["final_selection_objective"] = "Choose your sword material."
 	GameManager.save_data.chapter = 8
 	SaveManager.save_checkpoint()
@@ -290,19 +287,19 @@ func _complete_final_selection() -> void:
 	day_transitioning = false
 
 func _show_completed_state() -> void:
-	current_day = 7
-	day_label.text = "DAY 7 / 7"
+	current_day = TOTAL_DAYS
+	day_label.text = "DAY %d / %d" % [TOTAL_DAYS, TOTAL_DAYS]
 	objective_label.text = "OBJECTIVE\nChoose your sword material."
 	feedback_label.text = "FINAL SELECTION COMPLETE\nSword material selection has not begun."
 	feedback_label.visible = true
 	boss_panel.visible = false
-	player.global_position = DAY_CHECKPOINTS[7]
+	player.global_position = DAY_CHECKPOINTS[TOTAL_DAYS]
 	combat.set_combat_enabled(false)
 
 func _update_objective() -> void:
 	var config: Dictionary = DAY_CONFIG[current_day]
 	var progress := ""
-	if current_day < 7:
+	if current_day < TOTAL_DAYS:
 		progress = "\nDemons defeated: %d / %d • Destination: %s" % [mini(kills_this_day, int(config.kills)), int(config.kills), "reached" if marker_reached else "follow the blue beacon"]
 	else:
 		progress = "\nBoss region: %s" % ("entered" if marker_reached else "follow the crimson beacon")
@@ -317,7 +314,7 @@ func _create_objective_marker(position: Vector3) -> void:
 	mesh.bottom_radius = 0.5
 	mesh.height = 5.0
 	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.8, 0.08, 0.04) if current_day == 7 else Color(0.05, 0.68, 1.0)
+	material.albedo_color = Color(0.8, 0.08, 0.04) if current_day == TOTAL_DAYS else Color(0.05, 0.68, 1.0)
 	material.emission_enabled = true
 	material.emission = material.albedo_color
 	material.emission_energy_multiplier = 2.5
@@ -408,7 +405,7 @@ func _clear_enemies() -> void:
 	boss_panel.visible = false
 
 func _camp_position_for_day() -> Vector3:
-	return {3: Vector3(-18, 5, -56), 5: Vector3(22, 2, -102), 6: Vector3(0, 7, -126)}.get(current_day, Vector3(999, 999, 999))
+	return {3: Vector3(-18, 5, -56), 4: Vector3(22, 2, -102)}.get(current_day, Vector3(999, 999, 999))
 
 func _apply_day_atmosphere(day: int) -> void:
 	var darkness := clampf(0.12 + day * 0.045, 0.15, 0.46)

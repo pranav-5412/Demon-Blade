@@ -29,7 +29,7 @@ func _run() -> void:
 	add_child(scene)
 	await get_tree().process_frame
 	_check(scene.current_day == 1, "Day 1 begins")
-	_check(scene.day_label.text == "DAY 1 / 7", "Day counter appears")
+	_check(scene.day_label.text == "DAY 1 / 5", "Day counter appears")
 	_check(scene.active_enemies.size() == 2, "Day 1 controlled spawn count")
 	_check(scene.active_enemies.size() <= 6, "Active enemy cap is respected")
 	_check(scene.get_node("EnvironmentGeometry").get_child_count() >= 20, "Multi-region terrain builds")
@@ -58,7 +58,7 @@ func _run() -> void:
 		_check(enemy.telegraph != null, "%s has attack telegraph" % kinds[index])
 	_check(health_values[0] != health_values[1] and health_values[2] > health_values[0] and health_values[4] > health_values[2], "Archetypes have distinct durability")
 	var spawn_points_grounded := true
-	for day in range(1, 7):
+	for day in range(1, 5):
 		for spawn_position: Vector3 in scene.DAY_SPAWNS[day]:
 			var ray := PhysicsRayQueryParameters3D.create(spawn_position + Vector3(0, 3, 0), spawn_position + Vector3(0, -5, 0))
 			if scene.get_world_3d().direct_space_state.intersect_ray(ray).is_empty():
@@ -101,7 +101,7 @@ func _run() -> void:
 	_check(scene.current_day == 2, "Death restores the current day (actual %d)" % scene.current_day)
 	_check(bool(GameManager.save_data.story_flags.get("final_selection_day_1_completed", false)), "Death preserves completed days")
 	_check(scene.player.global_position.distance_to(scene.DAY_CHECKPOINTS[2]) < 2.0, "Death restores the day checkpoint position (%s)" % scene.player.global_position)
-	scene._start_day(5, false)
+	scene._start_day(4, false)
 	scene.day_transitioning = false
 	scene.player.global_position = scene._camp_position_for_day()
 	scene.player_combatant.current_health = 20.0
@@ -109,12 +109,12 @@ func _run() -> void:
 	scene.interaction_label.visible = true
 	scene._on_player_interact()
 	_check(scene.recovery_used_today and scene.player.health == scene.player.max_health, "Limited recovery point restores health once per day")
-	scene.current_day = 7
-	scene._start_day(7, false)
+	scene.current_day = 5
+	scene._start_day(5, false)
 	scene.marker_reached = true
 	scene._spawn_boss()
 	await get_tree().process_frame
-	_check(is_instance_valid(scene.boss), "Day 7 boss appears")
+	_check(is_instance_valid(scene.boss), "Day 5 boss appears")
 	_check(scene.boss_panel.visible, "Boss health bar appears")
 	_check(scene.boss.archetype == "boss" and scene.boss.combatant.max_health >= 800.0, "Boss is specialized beyond normal enemies")
 	scene.boss.attack_telegraphed.connect(func(_enemy, _attack): boss_telegraphs += 1)
@@ -137,11 +137,11 @@ func _run() -> void:
 	_check(not scene.boss.active and int(scene.boss.state) == 5, "Boss stops attacking after defeat")
 	_check(bool(GameManager.save_data.story_flags.get("final_selection_boss_defeated", false)), "Boss defeat flag saves")
 	_check(bool(GameManager.save_data.story_flags.get("final_selection_completed", false)), "Final Selection completion saves")
-	_check(int(GameManager.save_data.story_flags.get("final_selection_day", 0)) == 7, "Completion preserves Day 7")
+	_check(int(GameManager.save_data.story_flags.get("final_selection_day", 0)) == 5, "Completion preserves Day 5")
 	_check(scene.objective_label.text.contains("Choose your sword material."), "Completion objective is exact")
 	_check(GameManager.save_data.sword_material.is_empty(), "Sword material selection does not begin")
 	_check(SaveManager.has_save(), "Checkpoint file exists")
-	_check(SaveManager.load_save() and int(GameManager.save_data.story_flags.get("final_selection_day", 0)) == 7, "Reload restores progression")
+	_check(SaveManager.load_save() and int(GameManager.save_data.story_flags.get("final_selection_day", 0)) == 5, "Reload restores progression")
 	_check(GameManager.can_autosave() or GameManager.current_state == GameManager.GameState.GAMEPLAY, "Autosave gameplay state remains supported")
 	for path in ["res://scenes/episode_01/chapter_01_last_normal_day.tscn", "res://scenes/episode_01/journey_to_shizu.tscn", "res://scenes/episode_01/shizu_training.tscn", "res://scenes/episode_01/final_training_challenge.tscn"]:
 		_check(ResourceLoader.exists(path) and load(path) != null, "Existing scene still loads: %s" % path.get_file())
