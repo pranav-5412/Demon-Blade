@@ -62,9 +62,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("heavy_attack"):
 		_perform_attack("heavy", 24.0, HEAVY_STAMINA_COST, 0.78, 0.26)
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("dodge"):
+	elif event.is_action_pressed("dodge") or _is_ctrl_pressed(event):
 		_perform_dodge()
 		get_viewport().set_input_as_handled()
+
+func _is_ctrl_pressed(event: InputEvent) -> bool:
+	return event is InputEventKey and event.pressed and (event.keycode == KEY_CTRL or event.physical_keycode == KEY_CTRL)
 
 func set_combat_enabled(value: bool) -> void:
 	enabled = value

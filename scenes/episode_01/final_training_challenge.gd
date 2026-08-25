@@ -292,7 +292,7 @@ func _start_trial_b(resuming: bool = false) -> void:
 func _on_b_telegraph(_duration: float) -> void:
 	b_dodge_during_telegraph = false
 	b_counter_ready = false
-	_show_trial_message("Fast red telegraph — dodge now, then close the distance for the blue opening.")
+		_show_trial_message("Fast red telegraph — press Ctrl to dodge, then close the distance for the blue opening.")
 
 func _on_b_attack_resolved(avoided: bool, _guarded: bool) -> void:
 	if phase != Phase.TRIAL_B:
