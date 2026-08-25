@@ -36,6 +36,12 @@ func _run() -> void:
 	for frame in 45:
 		await get_tree().physics_frame
 	_check(scene.get_node("Player").is_on_floor() and scene.get_node("Player").global_position.y > 0.5, "Player remains supported at the Day 1 spawn")
+	scene.player_combatant.current_health = 50.0
+	scene.player.health = 50.0
+	scene.seconds_since_damage = scene.HEALTH_REGEN_DELAY
+	scene._update_health_regeneration(1.0)
+	_check(scene.player.health > 50.0 and scene.player.health < scene.player.max_health, "Health regenerates slowly after the damage delay")
+	scene.player_combatant.restore_full_health()
 	var valid_position := GameManager.save_data.player_position
 	GameManager.save_data.player_position = Vector3(500, 10, 500)
 	_check(scene._saved_or_checkpoint_position(1) == scene.DAY_CHECKPOINTS[1], "Out-of-bounds saved positions are rejected")

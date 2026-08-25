@@ -34,6 +34,14 @@ func restore_full_health() -> void:
 	current_health = max_health
 	health_changed.emit(current_health, max_health)
 
+func heal(amount: float) -> float:
+	if amount <= 0.0 or current_health <= 0.0 or current_health >= max_health:
+		return 0.0
+	var previous_health := current_health
+	current_health = minf(max_health, current_health + amount)
+	health_changed.emit(current_health, max_health)
+	return current_health - previous_health
+
 func set_guarding(guarding: bool) -> void:
 	is_guarding = guarding
 
