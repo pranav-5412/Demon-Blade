@@ -33,9 +33,16 @@ func _run() -> void:
 	_check(scene.active_enemies.size() == 2, "Day 1 controlled spawn count")
 	_check(scene.active_enemies.size() <= 6, "Active enemy cap is respected")
 	_check(scene.get_node("EnvironmentGeometry").get_child_count() >= 20, "Multi-region terrain builds")
-	await get_tree().physics_frame
-	await get_tree().physics_frame
-	_check(scene.get_node("Player").is_on_floor() or scene.get_node("Player").global_position.y >= 0.5, "Player starts above walkable terrain")
+	for frame in 45:
+		await get_tree().physics_frame
+	_check(scene.get_node("Player").is_on_floor() and scene.get_node("Player").global_position.y > 0.5, "Player remains supported at the Day 1 spawn")
+	var valid_position := GameManager.save_data.player_position
+	GameManager.save_data.player_position = Vector3(500, 10, 500)
+	_check(scene._saved_or_checkpoint_position(1) == scene.DAY_CHECKPOINTS[1], "Out-of-bounds saved positions are rejected")
+	GameManager.save_data.player_position = valid_position
+	scene.player.global_position = Vector3(0, -5, 10)
+	await scene._rescue_from_void()
+	_check(scene.player.global_position.distance_to(scene.DAY_CHECKPOINTS[1]) < 0.5, "Void fall returns player to current day checkpoint")
 	var kinds := ["standard", "fast", "brute", "ranged", "elite"]
 	var health_values: Array[float] = []
 	for index in kinds.size():

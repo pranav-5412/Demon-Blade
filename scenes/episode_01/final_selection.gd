@@ -58,6 +58,7 @@ var boss: Node3D
 var lock_refresh := 0.0
 var active_marker: MeshInstance3D
 var boss_started := false
+var rescue_in_progress := false
 
 func _ready() -> void:
 	GameManager.set_game_state(GameManager.GameState.GAMEPLAY)
@@ -80,6 +81,9 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	status_label.text = "TANJIRO\nHealth: %d\nStamina: %d\nBreath: %d / %d" % [roundi(player.health), roundi(player.stamina), roundi(breathing.current_breath), roundi(breathing.max_breath)]
 	wan_label.text = "WAN  %d" % GameManager.save_data.wan_currency
+	if player.global_position.y < -2.0 and not rescue_in_progress:
+		_rescue_from_void()
+		return
 	if day_transitioning or bool(GameManager.save_data.story_flags.get("final_selection_completed", false)):
 		return
 	lock_refresh -= delta
@@ -367,9 +371,20 @@ func _checkpoint_day() -> void:
 
 func _saved_or_checkpoint_position(day: int) -> Vector3:
 	var data := GameManager.save_data
-	if data.current_scene == FINAL_SELECTION_SCENE and int(data.story_flags.get("final_selection_day", 1)) == day and data.player_position.y > 0.0:
+	var saved_position_is_safe := data.player_position.y > -1.0 and data.player_position.y < 20.0 and data.player_position.distance_to(DAY_CHECKPOINTS[day]) <= 45.0
+	if data.current_scene == FINAL_SELECTION_SCENE and int(data.story_flags.get("final_selection_day", 1)) == day and saved_position_is_safe:
 		return data.player_position
 	return DAY_CHECKPOINTS[day]
+
+func _rescue_from_void() -> void:
+	rescue_in_progress = true
+	player.global_position = DAY_CHECKPOINTS[current_day]
+	player.velocity = Vector3.ZERO
+	GameManager.save_data.player_position = player.global_position
+	SaveManager.save_checkpoint()
+	_show_feedback("Unsafe position corrected — returned to the Day %d checkpoint." % current_day)
+	await get_tree().physics_frame
+	rescue_in_progress = false
 
 func _clear_enemies() -> void:
 	for enemy in active_enemies:
@@ -390,6 +405,7 @@ func _apply_day_atmosphere(day: int) -> void:
 	sound_hook_requested.emit(&"night_ambience")
 
 func _build_region() -> void:
+	_add_ground("SafetyFoundation", Vector3(110, 1, 230), Vector3(0, -4.5, -75), Color(0.035, 0.055, 0.05))
 	_add_ground("EntryForest", Vector3(42, 1, 42), Vector3(0, -0.5, 10), Color(0.12, 0.25, 0.13))
 	_add_ground("EntryToPass", Vector3(16, 1, 20), Vector3(0, 0.7, -12), Color(0.2, 0.18, 0.12), Vector3(-7, 0, 0))
 	_add_ground("RockyPass", Vector3(30, 1, 28), Vector3(0, 1.5, -28), Color(0.26, 0.25, 0.22))
