@@ -62,7 +62,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("heavy_attack"):
 		_perform_attack("heavy", 24.0, HEAVY_STAMINA_COST, 0.78, 0.26)
 		get_viewport().set_input_as_handled()
-	elif event.is_action_pressed("dodge") or event.is_action_pressed("jump"):
+	elif event.is_action_pressed("dodge"):
 		_perform_dodge()
 		get_viewport().set_input_as_handled()
 

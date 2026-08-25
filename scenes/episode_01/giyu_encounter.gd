@@ -133,7 +133,7 @@ func _run_tutorial() -> void:
 		var dodge_result: Dictionary = await giyu_controller.perform_telegraphed_attack(player_combatant)
 		dodge_succeeded = dodge_attempted and bool(dodge_result.get("avoided", false))
 		if not dodge_succeeded:
-			tutorial_label.text = "Watch the wind-up, then dodge — Ctrl or Space."
+			tutorial_label.text = "Watch the wind-up, then dodge — Ctrl."
 			player_combatant.restore_full_health()
 			dodge_attempted = false
 	phase = TutorialPhase.GUARD

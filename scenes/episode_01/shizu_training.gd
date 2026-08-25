@@ -62,7 +62,8 @@ func _ready() -> void:
 	data.episode = 1
 	data.chapter = 4
 	data.current_scene = TRAINING_SCENE
-	data.player_position = player.global_position
+	if data.player_position.y <= 0.0:
+		data.player_position = player.global_position
 	data.story_flags["training_started"] = true
 	training_stage = clampi(int(data.story_flags.get("training_stage", 1)), 1, 7)
 	current_mastery_form = clampi(int(data.story_flags.get("water_mastery_form", 1)), 1, 7)
@@ -99,6 +100,8 @@ func _run_training_intro() -> void:
 	await _show_dialogue("Shizu: Complete each drill. Rushing ahead will only teach you how to fail faster.", 3.7)
 	GameManager.save_data.story_flags["training_intro_seen"] = true
 	GameManager.save_data.story_flags["training_stage"] = 1
+	GameManager.save_data.story_flags["training_checkpoint_stage"] = 1
+	GameManager.save_data.story_flags["training_checkpoint_index"] = 0
 	SaveManager.save_checkpoint()
 	player_camera.current = true
 	player.set_controls_enabled(true)
@@ -156,11 +159,15 @@ func _configure_stage(stage: int) -> void:
 			active_checkpoints = _areas_in($CheckpointSets/FinalCourse)
 			_show_checkpoint_set(active_checkpoints)
 			_reset_dummies(1, 240.0, [Vector3(0, 0, -23)])
+	_restore_stage_checkpoint(stage)
 	_set_objective(STAGE_OBJECTIVES[stage])
 	_update_form_hud()
 	if stage == 5:
 		SaveManager.save_checkpoint()
-	_show_feedback("Training Stage %d / 7" % stage)
+	if stage == 7:
+		_show_feedback("Space jumps • Ctrl dodges • Follow the blue markers from the low end of each slope.")
+	else:
+		_show_feedback("Training Stage %d / 7" % stage)
 
 func _areas_in(parent: Node) -> Array[Area3D]:
 	var result: Array[Area3D] = []
@@ -179,12 +186,26 @@ func _update_checkpoint_markers() -> void:
 		var marker := active_checkpoints[index].get_node("Marker") as MeshInstance3D
 		marker.visible = index == checkpoint_index
 
+func _restore_stage_checkpoint(stage: int) -> void:
+	var data := GameManager.save_data
+	if int(data.story_flags.get("training_checkpoint_stage", -1)) != stage:
+		return
+	checkpoint_index = clampi(int(data.story_flags.get("training_checkpoint_index", 0)), 0, active_checkpoints.size())
+	if checkpoint_index > 0 and data.player_position.y > 0.0:
+		player.global_position = data.player_position
+	_update_checkpoint_markers()
+
 func _reach_checkpoint() -> void:
 	if training_stage == 4:
 		breathing.refill(24.0)
 	checkpoint_index += 1
 	_show_feedback("Course marker %d / %d" % [checkpoint_index, active_checkpoints.size()])
 	_update_checkpoint_markers()
+	var data := GameManager.save_data
+	data.story_flags["training_checkpoint_stage"] = training_stage
+	data.story_flags["training_checkpoint_index"] = checkpoint_index
+	data.player_position = player.global_position
+	SaveManager.save_checkpoint()
 	if checkpoint_index >= active_checkpoints.size():
 		if training_stage == 7:
 			_check_final_course()
@@ -333,6 +354,8 @@ func _complete_stage() -> void:
 		return
 	training_stage += 1
 	GameManager.save_data.story_flags["training_stage"] = training_stage
+	GameManager.save_data.story_flags["training_checkpoint_stage"] = training_stage
+	GameManager.save_data.story_flags["training_checkpoint_index"] = 0
 	SaveManager.save_checkpoint()
 	_show_feedback("Stage %d complete — checkpoint saved" % completed_stage)
 	await get_tree().create_timer(1.4).timeout
@@ -430,7 +453,7 @@ func _build_dummies() -> void:
 func _build_checkpoint_sets() -> void:
 	_create_checkpoint_set($CheckpointSets/Endurance, [Vector3(-10, 1, 7), Vector3(-12, 2.4, -7), Vector3(0, 4.2, -18), Vector3(12, 2.2, -8), Vector3(8, 1, 7)])
 	_create_checkpoint_set($CheckpointSets/Breathing, [Vector3(-7, 1, -4), Vector3(0, 1, -11), Vector3(7, 1, -4)])
-	_create_checkpoint_set($CheckpointSets/FinalCourse, [Vector3(-10, 1, 5), Vector3(-8, 2.5, -9), Vector3(8, 3.5, -16), Vector3(10, 1, -23)])
+	_create_checkpoint_set($CheckpointSets/FinalCourse, [Vector3(-10, 1, 9.2), Vector3(-8, 2.5, -9), Vector3(8, 5.3, -18), Vector3(10, 1, -23)])
 
 func _create_checkpoint_set(parent: Node3D, positions: Array) -> void:
 	for index in positions.size():

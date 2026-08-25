@@ -58,12 +58,10 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 func _update_vertical_velocity(delta: float) -> void:
-	var combat_controller: Node = get_node_or_null("CombatController")
-	var combat_is_active := combat_controller != null and bool(combat_controller.get("enabled"))
 	if not is_on_floor():
 		velocity.y -= gravity * delta
-	elif controls_enabled and not combat_is_active and Input.is_action_just_pressed("jump"):
-		velocity.y = jump_velocity
+	elif Input.is_action_just_pressed("jump"):
+		try_jump()
 	else:
 		velocity.y = -0.1
 
@@ -106,6 +104,23 @@ func _restore_saved_position() -> void:
 		global_position = data.player_position
 		health = clampf(data.player_health, 0.0, max_health)
 		stamina = clampf(data.player_stamina, 0.0, max_stamina)
+
+func _has_jump_floor() -> bool:
+	if is_on_floor():
+		return true
+	var query := PhysicsRayQueryParameters3D.create(global_position + Vector3(0.0, 0.1, 0.0), global_position + Vector3(0.0, -1.2, 0.0), collision_mask)
+	query.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return false
+	var floor_normal: Vector3 = hit["normal"]
+	return floor_normal.angle_to(Vector3.UP) <= floor_max_angle
+
+func try_jump() -> bool:
+	if not controls_enabled or not _has_jump_floor():
+		return false
+	velocity.y = jump_velocity
+	return true
 
 func _toggle_mouse_capture() -> void:
 	var next_mode := Input.MOUSE_MODE_VISIBLE if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED else Input.MOUSE_MODE_CAPTURED

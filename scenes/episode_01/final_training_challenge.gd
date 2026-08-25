@@ -237,7 +237,7 @@ func _start_trial_a(resuming: bool = false) -> void:
 
 func _on_a_telegraph(_duration: float) -> void:
 	a_dodge_during_telegraph = false
-	_show_trial_message("Red telegraph — hold Q to guard or press Ctrl/Space to dodge.")
+	_show_trial_message("Red telegraph — hold Q to guard or press Ctrl to dodge. Space jumps.")
 
 func _on_a_attack_resolved(avoided: bool, guarded: bool) -> void:
 	if phase != Phase.TRIAL_A:
