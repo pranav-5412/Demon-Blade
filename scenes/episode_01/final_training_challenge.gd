@@ -47,6 +47,7 @@ func _ready() -> void:
 	GameManager.set_game_state(GameManager.GameState.GAMEPLAY)
 	_build_environment()
 	_build_boulder()
+	_build_boulder_marker()
 	_build_companions()
 	_connect_combat()
 	var data := GameManager.save_data
@@ -140,6 +141,9 @@ func _apply_saved_progress() -> void:
 		call_deferred("_start_trial_a", true)
 	else:
 		phase = Phase.APPROACH
+		player.global_position = Vector3(0, 1, 14)
+		player.velocity = Vector3.ZERO
+		player.look_at($Boulder.global_position + Vector3(0, 1.5, 0), Vector3.UP)
 		companion_a.set_manifested(false)
 		companion_b.set_manifested(false)
 		_set_objective("Approach the final boulder.")
@@ -463,6 +467,7 @@ func _split_boulder() -> void:
 func _show_intact_state() -> void:
 	$Boulder/Intact.visible = true
 	$Boulder/SplitHalves.visible = false
+	$Boulder/BoulderWaypoint.visible = true
 	intact_collision.set_deferred("disabled", false)
 	for collision in split_collisions:
 		collision.set_deferred("disabled", true)
@@ -470,6 +475,7 @@ func _show_intact_state() -> void:
 func _show_split_state() -> void:
 	$Boulder/Intact.visible = false
 	$Boulder/SplitHalves.visible = true
+	$Boulder/BoulderWaypoint.visible = false
 	intact_collision.set_deferred("disabled", true)
 	for collision in split_collisions:
 		collision.set_deferred("disabled", false)
@@ -603,6 +609,23 @@ func _build_boulder() -> void:
 	$Boulder/Intact.add_child(body)
 	split_left = _create_boulder_half("LeftHalf", Vector3(-1.0, 2.7, 0), Vector3(1.75, 2.7, 2.5), rock_material)
 	split_right = _create_boulder_half("RightHalf", Vector3(1.0, 2.7, 0), Vector3(1.75, 2.7, 2.5), rock_material)
+
+func _build_boulder_marker() -> void:
+	var marker_material := StandardMaterial3D.new()
+	marker_material.albedo_color = Color(0.12, 0.72, 1.0, 1.0)
+	marker_material.emission_enabled = true
+	marker_material.emission = Color(0.04, 0.42, 1.0, 1.0)
+	marker_material.emission_energy_multiplier = 3.0
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.18
+	mesh.bottom_radius = 0.48
+	mesh.height = 4.0
+	mesh.material = marker_material
+	var marker := MeshInstance3D.new()
+	marker.name = "BoulderWaypoint"
+	marker.mesh = mesh
+	marker.position = Vector3(0, 7.0, 0)
+	$Boulder.add_child(marker)
 
 func _create_boulder_half(label: String, position: Vector3, half_scale: Vector3, material: StandardMaterial3D) -> Node3D:
 	var half := Node3D.new()
