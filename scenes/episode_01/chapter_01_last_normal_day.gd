@@ -12,6 +12,8 @@ const TRAINING_SCENE := "res://scenes/episode_01/shizu_training.tscn"
 const FINAL_TRAINING_SCENE := "res://scenes/episode_01/final_training_challenge.tscn"
 const FINAL_SELECTION_SCENE := "res://scenes/episode_01/final_selection.tscn"
 const POST_SELECTION_SCENE := "res://scenes/episode_01/post_selection_trio.tscn"
+const TRIO_JOURNEY_SCENE := "res://scenes/episode_01/trio_mountain_journey.tscn"
+const DRUM_HOUSE_SCENE := "res://scenes/episode_01/drum_house.tscn"
 
 const OBJECTIVES := [
 	"Go to the wood chopping area.",
@@ -50,7 +52,7 @@ var is_cinematic: bool = false
 var journey_transition_started: bool = false
 
 func _ready() -> void:
-	if SaveManager.load_save() and GameManager.save_data.current_scene in [JOURNEY_SCENE, TRAINING_SCENE, FINAL_TRAINING_SCENE, FINAL_SELECTION_SCENE, POST_SELECTION_SCENE]:
+	if SaveManager.load_save() and GameManager.save_data.current_scene in [JOURNEY_SCENE, TRAINING_SCENE, FINAL_TRAINING_SCENE, FINAL_SELECTION_SCENE, POST_SELECTION_SCENE, TRIO_JOURNEY_SCENE, DRUM_HOUSE_SCENE]:
 		call_deferred("_resume_saved_scene", GameManager.save_data.current_scene)
 		return
 	GameManager.set_game_state(GameManager.GameState.GAMEPLAY)

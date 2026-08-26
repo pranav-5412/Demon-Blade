@@ -1,0 +1,104 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scenes/episode_01/trio_mountain_journey.gd" id="1_scene"]
+[ext_resource type="PackedScene" path="res://scenes/shared/trio_player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://systems/party_companion_follow.gd" id="3_companions"]
+
+[sub_resource type="Environment" id="Environment_journey"]
+background_mode = 1
+background_color = Color(0.18, 0.28, 0.34, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.52, 0.62, 0.68, 1)
+ambient_light_energy = 0.85
+fog_enabled = true
+fog_light_color = Color(0.45, 0.54, 0.58, 1)
+fog_density = 0.003
+
+[node name="TrioMountainJourney" type="Node3D"]
+script = ExtResource("1_scene")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_journey")
+
+[node name="SunLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -26, 0)
+light_color = Color(0.8, 0.86, 0.94, 1)
+light_energy = 1.2
+shadow_enabled = true
+
+[node name="EnvironmentGeometry" type="Node3D" parent="."]
+
+[node name="Enemies" type="Node3D" parent="."]
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector3(0, 1.2, 14)
+
+[node name="PartyCompanions" type="Node3D" parent="."]
+script = ExtResource("3_companions")
+player_path = NodePath("../Player")
+party_path = NodePath("../Player/PartyCharacterController")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="StatusLabel" type="Label" parent="HUD"]
+offset_left = 28.0
+offset_top = 24.0
+offset_right = 390.0
+offset_bottom = 155.0
+theme_override_font_sizes/font_size = 20
+
+[node name="SectionLabel" type="Label" parent="HUD"]
+offset_left = 520.0
+offset_top = 24.0
+offset_right = 1400.0
+offset_bottom = 70.0
+theme_override_colors/font_color = Color(0.9, 0.78, 0.42, 1)
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+
+[node name="ObjectiveLabel" type="Label" parent="HUD"]
+offset_left = 28.0
+offset_top = 180.0
+offset_right = 720.0
+offset_bottom = 275.0
+theme_override_font_sizes/font_size = 20
+autowrap_mode = 2
+
+[node name="AbilityLabel" type="Label" parent="HUD"]
+offset_left = 28.0
+offset_top = 300.0
+offset_right = 760.0
+offset_bottom = 390.0
+theme_override_colors/font_color = Color(0.2, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 18
+
+[node name="DialogueLabel" type="Label" parent="HUD"]
+offset_left = 400.0
+offset_top = 700.0
+offset_right = 1520.0
+offset_bottom = 800.0
+theme_override_colors/font_color = Color(0.96, 0.92, 0.78, 1)
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+autowrap_mode = 2
+visible = false
+
+[node name="InteractionLabel" type="Label" parent="HUD"]
+offset_left = 620.0
+offset_top = 825.0
+offset_right = 1300.0
+offset_bottom = 875.0
+theme_override_font_sizes/font_size = 21
+text = "Press E to enter the Drum House"
+horizontal_alignment = 1
+visible = false
+
+[node name="FeedbackLabel" type="Label" parent="HUD"]
+offset_left = 430.0
+offset_top = 110.0
+offset_right = 1490.0
+offset_bottom = 160.0
+theme_override_colors/font_color = Color(0.3, 0.86, 1, 1)
+theme_override_font_sizes/font_size = 19
+horizontal_alignment = 1
+visible = false

@@ -251,7 +251,7 @@ func _run() -> void:
 		_check(ResourceLoader.exists(path) and load(path) != null, "Previous scene still loads: %s" % path.get_file())
 	var chapter_script := load("res://scenes/episode_01/chapter_01_last_normal_day.gd") as Script
 	_check(chapter_script.get_script_constant_map().get("POST_SELECTION_SCENE", "") == scene.SCENE_PATH, "Game restart router recognizes post-selection saves")
-	_check(not ResourceLoader.exists("res://scenes/episode_01/drum_house.tscn"), "No later Drum House content was created")
+	_check(not bool(GameManager.save_data.story_flags.get("drum_house_entered", false)), "Milestone 10 state does not prematurely enter later Drum House content")
 	scene.queue_free()
 
 func _on_attack_seen(attack_type: String) -> void:

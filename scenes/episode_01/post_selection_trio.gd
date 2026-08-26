@@ -14,6 +14,7 @@ enum ProgressState {
 }
 
 const SCENE_PATH := "res://scenes/episode_01/post_selection_trio.tscn"
+const TRIO_JOURNEY_SCENE := "res://scenes/episode_01/trio_mountain_journey.tscn"
 const MATERIALS := [
 	{"id": "balanced_ore", "name": "Riverstone Steel", "description": "A dependable alloy with an even temper.", "effect": "Balanced: +3% sword damage with no drawback."},
 	{"id": "swift_alloy", "name": "Cloudsilver Alloy", "description": "A light metal that responds quickly to motion.", "effect": "Light: faster attacks, but slightly weaker heavy strikes."},
@@ -43,6 +44,7 @@ const MATERIALS := [
 @onready var material_description: Label = $HUD/SelectionPanel/MaterialDescription
 @onready var material_effect: Label = $HUD/SelectionPanel/MaterialEffect
 @onready var confirmation_label: Label = $HUD/SelectionPanel/ConfirmationLabel
+@onready var journey_exit: Node3D = $JourneyExit
 
 var state := ProgressState.APPROACH_MATERIAL
 var material_index := 0
@@ -54,6 +56,7 @@ var feedback_time := 0.0
 var party_companions_active := false
 var active_character_id := "tanjiro"
 var companion_ids: Array[String] = []
+var journey_transition_started := false
 
 func _ready() -> void:
 	GameManager.set_game_state(GameManager.GameState.GAMEPLAY)
@@ -76,6 +79,8 @@ func _process(delta: float) -> void:
 			feedback_label.visible = false
 	if player.global_position.y < -3.0:
 		_rescue_player()
+	if state == ProgressState.COMPLETE and not journey_transition_started and player.global_position.distance_to(journey_exit.global_position) <= 3.0:
+		_depart_for_mountain_journey()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if state not in [ProgressState.MATERIAL_MENU, ProgressState.MATERIAL_CONFIRM]:
@@ -152,6 +157,7 @@ func _restore_progress_state() -> void:
 		inosuke_npc.visible = false
 	party.set_switching_allowed(state == ProgressState.COMPLETE)
 	active_character_id = party.current_character
+	journey_exit.visible = state == ProgressState.COMPLETE
 	SaveManager.save_checkpoint()
 
 func _on_interact() -> void:
@@ -352,6 +358,7 @@ func _enter_complete_state(show_notice: bool = true) -> void:
 	_set_current_character_if_needed()
 	active_character_id = party.current_character
 	party_companions_active = true
+	journey_exit.visible = true
 	_refresh_party_companions()
 	_set_objective("Travel through the mountain with Zenitsu and Inosuke.")
 	SaveManager.save_checkpoint()
@@ -366,6 +373,20 @@ func _set_current_character_if_needed() -> void:
 	var requested := GameManager.save_data.current_playable_character.to_lower()
 	if requested not in ["tanjiro", "zenitsu", "inosuke"]:
 		party.apply_character("tanjiro", false)
+
+func _depart_for_mountain_journey() -> void:
+	journey_transition_started = true
+	party.set_switching_allowed(false)
+	player.set_controls_enabled(false)
+	combat.set_combat_enabled(false)
+	title_label.text = "THE MOUNTAIN ROAD\nThe trio sets out together."
+	title_label.visible = true
+	GameManager.save_data.story_flags["trio_journey_started"] = true
+	GameManager.save_data.current_scene = TRIO_JOURNEY_SCENE
+	GameManager.save_data.player_position = Vector3(0, 1.2, 12)
+	SaveManager.save_checkpoint()
+	await get_tree().create_timer(1.8).timeout
+	SceneManager.transition_to(TRIO_JOURNEY_SCENE)
 
 func _on_attack_performed(attack_type: String) -> void:
 	if state == ProgressState.ZENITSU_TUTORIAL and attack_type == "light":

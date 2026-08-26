@@ -1,0 +1,127 @@
+[gd_scene load_steps=20 format=3]
+
+[ext_resource type="Script" path="res://player/third_person_player.gd" id="1_player"]
+[ext_resource type="Script" path="res://combat/player_combat_controller.gd" id="2_combat"]
+[ext_resource type="Script" path="res://combat/combatant.gd" id="3_combatant"]
+[ext_resource type="Script" path="res://combat/combat_hitbox.gd" id="4_hitbox"]
+[ext_resource type="Script" path="res://combat/combat_hurtbox.gd" id="5_hurtbox"]
+[ext_resource type="Script" path="res://combat/breathing_controller.gd" id="6_breathing"]
+[ext_resource type="Script" path="res://combat/water_breathing_controller.gd" id="7_water"]
+[ext_resource type="Script" path="res://systems/party_character_controller.gd" id="8_party"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_01_dash_slash.tres" id="9_f1"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_02_spinning_defense.tres" id="10_f2"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_03_flowing_combo.tres" id="11_f3"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_04_wave_arc.tres" id="12_f4"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_05_calm_counter.tres" id="13_f5"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_06_rapid_flow.tres" id="14_f6"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_07_precision_thrust.tres" id="15_f7"]
+
+[sub_resource type="CapsuleShape3D" id="PlayerShape"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="PlayerMesh"]
+radius = 0.35
+height = 1.25
+
+[sub_resource type="SphereMesh" id="HeadMesh"]
+radius = 0.3
+height = 0.6
+
+[sub_resource type="BoxMesh" id="SwordMesh"]
+size = Vector3(0.08, 1.55, 0.11)
+
+[sub_resource type="SphereShape3D" id="HitShape"]
+radius = 0.95
+
+[sub_resource type="CapsuleShape3D" id="HurtShape"]
+radius = 0.42
+height = 1.9
+
+[sub_resource type="BoxShape3D" id="FormShape"]
+size = Vector3(1.4, 1.5, 1.8)
+
+[node name="Player" type="CharacterBody3D" groups=["player"]]
+script = ExtResource("1_player")
+
+[node name="Collision" type="CollisionShape3D" parent="."]
+shape = SubResource("PlayerShape")
+
+[node name="Visual" type="Node3D" parent="."]
+
+[node name="Body" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0, -0.2, 0)
+mesh = SubResource("PlayerMesh")
+
+[node name="Head" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0, 0.65, 0)
+mesh = SubResource("HeadMesh")
+
+[node name="Sword" type="MeshInstance3D" parent="Visual"]
+position = Vector3(0.48, 0.35, -0.08)
+rotation_degrees = Vector3(0, 0, -18)
+mesh = SubResource("SwordMesh")
+
+[node name="OffhandSword" type="MeshInstance3D" parent="Visual"]
+position = Vector3(-0.48, 0.35, -0.08)
+rotation_degrees = Vector3(0, 0, 18)
+mesh = SubResource("SwordMesh")
+visible = false
+
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0, 0.65, 0)
+rotation_degrees = Vector3(-12, 0, 0)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
+spring_length = 5.2
+margin = 0.15
+
+[node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
+current = true
+
+[node name="CombatController" type="Node3D" parent="."]
+script = ExtResource("2_combat")
+
+[node name="Combatant" type="Node" parent="CombatController"]
+script = ExtResource("3_combatant")
+
+[node name="Hitbox" type="Area3D" parent="CombatController"]
+position = Vector3(0, 0.45, -1)
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("4_hitbox")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CombatController/Hitbox"]
+shape = SubResource("HitShape")
+
+[node name="Hurtbox" type="Area3D" parent="."]
+position = Vector3(0, 0.1, 0)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("5_hurtbox")
+combatant_path = NodePath("../CombatController/Combatant")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Hurtbox"]
+shape = SubResource("HurtShape")
+
+[node name="BreathingController" type="Node" parent="."]
+script = ExtResource("6_breathing")
+
+[node name="WaterBreathingController" type="Node3D" parent="."]
+script = ExtResource("7_water")
+forms = [ExtResource("9_f1"), ExtResource("10_f2"), ExtResource("11_f3"), ExtResource("12_f4"), ExtResource("13_f5"), ExtResource("14_f6"), ExtResource("15_f7")]
+hitbox_path = NodePath("FormHitbox")
+breathing_path = NodePath("../BreathingController")
+combatant_path = NodePath("../CombatController/Combatant")
+
+[node name="FormHitbox" type="Area3D" parent="WaterBreathingController"]
+position = Vector3(0, 0.45, -1.2)
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("4_hitbox")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="WaterBreathingController/FormHitbox"]
+shape = SubResource("FormShape")
+
+[node name="PartyCharacterController" type="Node" parent="."]
+script = ExtResource("8_party")
