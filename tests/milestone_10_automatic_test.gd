@@ -169,6 +169,7 @@ func _run() -> void:
 	_check(not scene.training_dummy.get_node("Hurtbox").monitorable, "Inosuke target disables after tutorial")
 	_check(bool(GameManager.save_data.story_flags.get("character_switching_unlocked", false)), "Character switching unlock saves")
 	_check(scene.objective_label.text.contains("Travel through the mountain with Zenitsu and Inosuke."), "Milestone stops at exact trio journey objective")
+	_check(scene.companion_ids.size() == 2 and scene.party.current_character not in scene.companion_ids, "Active character is never duplicated as a companion")
 	_check(not bool(GameManager.save_data.story_flags.get("drum_house_started", false)), "Drum House does not begin")
 
 	var shared_player: ThirdPersonPlayer = scene.player
@@ -176,6 +177,7 @@ func _run() -> void:
 	var facing_before: Vector3 = shared_player.rotation
 	var camera_before: Vector3 = shared_player.camera_pivot.rotation
 	_check(scene.party.switch_to("tanjiro"), "Inosuke to Tanjiro switch works")
+	_check("inosuke" in scene.companion_ids and "tanjiro" not in scene.companion_ids, "Switch moves the previous Inosuke into a companion slot")
 	_check(scene.player == shared_player and scene.player.global_position.is_equal_approx(position_before), "Switch preserves one body and world position")
 	_check(scene.player.rotation.is_equal_approx(facing_before) and scene.player.camera_pivot.rotation.is_equal_approx(camera_before), "Switch preserves facing and camera orientation")
 	_check(scene.water.enabled and scene.get_node("Player/Visual/OffhandSword").visible == false, "Tanjiro Water Forms and sword restore")
@@ -186,7 +188,9 @@ func _run() -> void:
 	var tanjiro_form_works: bool = await scene.water.activate_form(1)
 	_check(tanjiro_form_works and scene.breathing.current_breath < tanjiro_breath_before, "Tanjiro Water Form still activates after switching")
 	_check(scene.party.switch_to("zenitsu"), "Tanjiro to Zenitsu switch works")
+	_check("tanjiro" in scene.companion_ids and "zenitsu" not in scene.companion_ids, "Switch moves the previous Tanjiro into a companion slot")
 	_check(scene.party.switch_to("inosuke"), "Zenitsu to Inosuke switch works")
+	_check("zenitsu" in scene.companion_ids and "inosuke" not in scene.companion_ids, "Switch moves the previous Zenitsu into a companion slot")
 	_check(scene.find_children("*", "CharacterBody3D", true, false).size() == 1 and scene.get_node("Player") == shared_player, "Switching creates no duplicate player body")
 	for frame in 10:
 		await get_tree().physics_frame

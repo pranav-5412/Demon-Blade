@@ -51,6 +51,9 @@ var dialogue_locked := false
 var tutorial_progress: Dictionary = {}
 var last_position := Vector3.ZERO
 var feedback_time := 0.0
+var party_companions_active := false
+var active_character_id := "tanjiro"
+var companion_ids: Array[String] = []
 
 func _ready() -> void:
 	GameManager.set_game_state(GameManager.GameState.GAMEPLAY)
@@ -66,6 +69,7 @@ func _process(delta: float) -> void:
 	_update_hud()
 	_update_interaction_prompt()
 	_update_tutorial_movement()
+	_update_party_companions(delta)
 	if feedback_time > 0.0:
 		feedback_time -= delta
 		if feedback_time <= 0.0:
@@ -147,6 +151,7 @@ func _restore_progress_state() -> void:
 		zenitsu_npc.visible = false
 		inosuke_npc.visible = false
 	party.set_switching_allowed(state == ProgressState.COMPLETE)
+	active_character_id = party.current_character
 	SaveManager.save_checkpoint()
 
 func _on_interact() -> void:
@@ -345,6 +350,9 @@ func _enter_complete_state(show_notice: bool = true) -> void:
 	party.switching_unlocked = true
 	party.set_switching_allowed(true)
 	_set_current_character_if_needed()
+	active_character_id = party.current_character
+	party_companions_active = true
+	_refresh_party_companions()
 	_set_objective("Travel through the mountain with Zenitsu and Inosuke.")
 	SaveManager.save_checkpoint()
 	if show_notice:
@@ -442,7 +450,11 @@ func _update_material_panel() -> void:
 	material_effect.text = str(choice.effect)
 	confirmation_label.text = "Choose this material? Press Confirm again to lock the decision." if material_confirmation_pending else "Left/Right or buttons to browse • E/Confirm to choose"
 
-func _on_character_changed(_character_id: String, display_name: String) -> void:
+func _on_character_changed(character_id: String, display_name: String) -> void:
+	var previous_character := active_character_id
+	active_character_id = character_id
+	if party_companions_active:
+		_refresh_party_companions(previous_character)
 	_show_feedback("Active character: %s" % display_name)
 
 func _on_health_changed(current: float, _maximum: float) -> void:
@@ -480,6 +492,86 @@ func _set_training_dummy_active(value: bool) -> void:
 	training_dummy.visible = value
 	var hurtbox := training_dummy.get_node("Hurtbox") as Area3D
 	hurtbox.set_deferred("monitorable", value)
+
+func _refresh_party_companions(previous_character: String = "") -> void:
+	var inactive_ids: Array[String] = []
+	if not previous_character.is_empty() and previous_character != active_character_id:
+		inactive_ids.append(previous_character)
+	for character_id in ["tanjiro", "zenitsu", "inosuke"]:
+		if character_id != active_character_id and character_id not in inactive_ids:
+			inactive_ids.append(character_id)
+	companion_ids = inactive_ids
+	_configure_companion(zenitsu_npc, inactive_ids[0])
+	_configure_companion(inosuke_npc, inactive_ids[1])
+	zenitsu_npc.visible = true
+	inosuke_npc.visible = true
+	zenitsu_npc.global_position = _companion_target_position(0)
+	inosuke_npc.global_position = _companion_target_position(1)
+
+func _update_party_companions(delta: float) -> void:
+	if not party_companions_active:
+		return
+	for slot_index in 2:
+		var companion := zenitsu_npc if slot_index == 0 else inosuke_npc
+		var target := _companion_target_position(slot_index)
+		companion.global_position = companion.global_position.lerp(target, minf(delta * 7.0, 1.0))
+		var face_target := player.global_position
+		face_target.y = companion.global_position.y
+		if companion.global_position.distance_squared_to(face_target) > 0.05:
+			companion.look_at(face_target, Vector3.UP)
+
+func _companion_target_position(slot_index: int) -> Vector3:
+	var side := -1.55 if slot_index == 0 else 1.55
+	var offset := player.global_basis.x * side + player.global_basis.z * 1.75
+	var target := player.global_position + offset
+	target.y = player.global_position.y - 1.0
+	return target
+
+func _configure_companion(companion: Node3D, character_id: String) -> void:
+	companion.name = "%sCompanion" % character_id.capitalize()
+	var profile: Dictionary = PartyCharacterController.PROFILES[character_id]
+	_set_companion_mesh_color(companion.get_node("Body") as MeshInstance3D, profile.color)
+	_set_companion_mesh_color(companion.get_node("Head") as MeshInstance3D, profile.head_color)
+	var left_blade := _ensure_companion_blade(companion, "BladeLeft", Vector3(-0.42, 0.92, 0), 18.0)
+	var right_blade := _ensure_companion_blade(companion, "BladeRight", Vector3(0.42, 0.92, 0), -18.0)
+	left_blade.visible = true
+	right_blade.visible = character_id == "inosuke"
+	_set_companion_mesh_color(left_blade, _companion_blade_color(character_id))
+	_set_companion_mesh_color(right_blade, _companion_blade_color(character_id))
+	var nameplate := companion.get_node_or_null("Nameplate") as Label3D
+	if nameplate == null:
+		nameplate = Label3D.new()
+		nameplate.name = "Nameplate"
+		nameplate.position = Vector3(0, 2.25, 0)
+		nameplate.font_size = 36
+		nameplate.outline_size = 4
+		companion.add_child(nameplate)
+	nameplate.text = str(profile.name)
+
+func _ensure_companion_blade(companion: Node3D, blade_name: String, local_position: Vector3, z_rotation: float) -> MeshInstance3D:
+	var blade := companion.get_node_or_null(blade_name) as MeshInstance3D
+	if blade == null:
+		blade = MeshInstance3D.new()
+		blade.name = blade_name
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(0.07, 1.35, 0.1)
+		blade.mesh = mesh
+		companion.add_child(blade)
+	blade.position = local_position
+	blade.rotation_degrees = Vector3(0, 0, z_rotation)
+	return blade
+
+func _set_companion_mesh_color(mesh_instance: MeshInstance3D, color: Color) -> void:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.62
+	mesh_instance.material_override = material
+
+func _companion_blade_color(character_id: String) -> Color:
+	match character_id:
+		"zenitsu": return Color(1.0, 0.78, 0.16)
+		"inosuke": return Color(0.68, 0.72, 0.74)
+		_: return Color(0.72, 0.76, 0.82)
 
 func _build_environment_details() -> void:
 	for position in [Vector3(-13, 0, 8), Vector3(13, 0, 8), Vector3(-14, 0, -6), Vector3(14, 0, -7), Vector3(-11, 0, -18), Vector3(11, 0, -18)]:
