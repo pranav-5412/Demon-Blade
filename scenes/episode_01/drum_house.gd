@@ -43,6 +43,7 @@ func _ready() -> void:
 	_build_house_geometry()
 	_build_boss_arena_states()
 	_configure_party()
+	_configure_indoor_navigation()
 	_connect_signals()
 	_restore_progress()
 
@@ -76,6 +77,20 @@ func _configure_party() -> void:
 	combat.set_combat_enabled(true)
 	player_combatant.max_health = player.max_health
 	player_combatant.current_health = clampf(player.health, 1.0, player.max_health)
+
+func _configure_indoor_navigation() -> void:
+	player.camera_distance = 3.0
+	player.spring_arm.spring_length = 3.0
+	player.spring_arm.margin = 0.28
+	player.spring_arm.collision_mask = 1
+	player.camera_pivot.position.y = 0.78
+	companions.set("follow_distance", 3.8)
+	companions.set("side_spacing", 0.82)
+	companions.set("catch_up_distance", 8.0)
+	for slot in companions.get("slots"):
+		var nameplate := (slot as Node3D).get_node_or_null("Nameplate") as Label3D
+		if nameplate != null:
+			nameplate.visible = false
 
 func _connect_signals() -> void:
 	player.interact_pressed.connect(_on_interact)
@@ -127,7 +142,8 @@ func _restore_progress() -> void:
 	else:
 		player.global_position = Vector3(0, 1.1, 22)
 		_set_area("ENTRY HALL")
-		_set_objective("Investigate the strange house.")
+		_set_objective("Investigate the strange house. Explore the open rooms, then follow the lanterns to the drum.")
+		_show_feedback("Turn left or right to enter a furnished room. The main route continues ahead.")
 	companions.force_catch_up()
 	SaveManager.save_checkpoint()
 
@@ -147,7 +163,10 @@ func _update_progress_triggers() -> void:
 
 func _update_interaction_prompt() -> void:
 	interaction_label.visible = false
-	if progress == 1 and player.global_position.distance_to(Vector3(0, 1.1, -11.5)) <= 4.0:
+	if progress == 0:
+		interaction_label.text = "Explore the open rooms on both sides • Follow the lantern corridor to the drum"
+		interaction_label.visible = true
+	elif progress == 1 and player.global_position.distance_to(Vector3(0, 1.1, -11.5)) <= 4.0:
 		interaction_label.text = "Press E to strike the drum — target seal %s" % _roman(PUZZLE_SEQUENCE[puzzle_step])
 		interaction_label.visible = true
 
@@ -488,63 +507,165 @@ func _roman(value: int) -> String:
 	return ["0", "I", "II", "III"][clampi(value, 0, 3)]
 
 func _build_house_geometry() -> void:
-	_add_room("EntryFoyer", Vector3(18, 0.8, 20), Vector3(0, -0.4, 18), Color(0.24, 0.16, 0.12))
-	_add_room("EntryHall", Vector3(7, 0.8, 13), Vector3(0, -0.4, 2.5), Color(0.21, 0.13, 0.1))
-	_add_room("Gallery", Vector3(18, 0.8, 22), Vector3(0, -0.4, -35), Color(0.25, 0.17, 0.12))
-	_add_room("SleepingRoom", Vector3(14, 0.8, 12), Vector3(-16, -0.4, -35), Color(0.2, 0.14, 0.12))
-	_add_room("StorageRoom", Vector3(14, 0.8, 12), Vector3(16, -0.4, -35), Color(0.18, 0.13, 0.1))
-	_add_room("GalleryHall", Vector3(7, 0.8, 10), Vector3(0, -0.4, -50), Color(0.2, 0.12, 0.09))
-	_add_room("HeartHall", Vector3(7, 0.8, 14), Vector3(0, -0.4, -69), Color(0.19, 0.1, 0.08))
-	_add_room("BossArena", Vector3(27, 0.8, 28), Vector3(0, -0.4, -90), Color(0.23, 0.11, 0.09), $BossArenaVisual)
-	for room_data in [[18.0, 18.0, 20.0], [-90.0, 27.0, 28.0]]:
-		_add_room_walls(float(room_data[0]), float(room_data[1]), float(room_data[2]))
-	_add_gallery_branch_walls()
-	_add_corridor_walls(2.5, 13.0, 7.0)
-	_add_corridor_walls(-50.0, 10.0, 7.0)
-	_add_corridor_walls(-69.0, 14.0, 7.0)
+	_add_house_room("EntryVestibule", Vector3(0, 0, 28.5), Vector2(6, 3), {"north": true}, Color(0.3, 0.19, 0.12))
+	_add_house_room("EntranceHall", Vector3(0, 0, 22), Vector2(10, 10), {"north": true, "south": true, "east": true, "west": true}, Color(0.36, 0.23, 0.14))
+	_add_house_room("TeaRoom", Vector3(-8, 0, 22), Vector2(6, 8), {"east": true}, Color(0.34, 0.3, 0.18))
+	_add_house_room("FamilyRoom", Vector3(8, 0, 22), Vector2(6, 8), {"west": true}, Color(0.32, 0.26, 0.18))
+	_add_house_room("MainCorridor", Vector3(0, 0, 14.5), Vector2(4.5, 5), {"north": true, "south": true}, Color(0.3, 0.19, 0.12))
+	_add_house_room("TatamiRoom", Vector3(0, 0, 9.5), Vector2(8, 5), {"north": true, "south": true, "east": true, "west": true}, Color(0.34, 0.22, 0.14))
+	_add_house_room("SideRoomA", Vector3(-7, 0, 9.5), Vector2(6, 7), {"east": true}, Color(0.3, 0.24, 0.17))
+	_add_house_room("SideRoomB", Vector3(7, 0, 9.5), Vector2(6, 7), {"west": true}, Color(0.29, 0.2, 0.15))
+	_add_house_room("PuzzleApproach", Vector3(0, 0, 2.0), Vector2(4.5, 10), {"north": true, "south": true}, Color(0.27, 0.17, 0.11))
+	_add_house_room("DrumThreshold", Vector3(0, 0, -4.75), Vector2(4.5, 3.5), {"north": true, "south": true}, Color(0.28, 0.17, 0.11))
+	_add_house_room("AlteredCorridor", Vector3(0, 0, -22), Vector2(4.5, 8), {"north": true, "south": true}, Color(0.27, 0.16, 0.11))
+	_add_house_room("GalleryThreshold", Vector3(0, 0, -27), Vector2(4.5, 2), {"north": true, "south": true}, Color(0.29, 0.18, 0.11))
+	_add_house_room("DemonCombatRoom", Vector3(0, 0, -35), Vector2(14, 14), {"north": true, "south": true, "east": true, "west": true}, Color(0.34, 0.22, 0.14))
+	_add_house_room("DamagedRoom", Vector3(-11, 0, -35), Vector2(7, 9), {"east": true}, Color(0.26, 0.18, 0.14))
+	_add_house_room("StorageRoom", Vector3(11, 0, -35), Vector2(7, 9), {"west": true}, Color(0.28, 0.19, 0.12))
+	_add_house_room("GalleryHall", Vector3(0, 0, -47), Vector2(4.5, 10), {"north": true, "south": true}, Color(0.28, 0.17, 0.11))
+	_add_house_room("TrapThreshold", Vector3(0, 0, -52.5), Vector2(4.5, 1), {"north": true, "south": true}, Color(0.28, 0.17, 0.11))
+	_add_house_room("PuzzleRoom", Vector3(0, 0, -69), Vector2(8, 12), {"north": true, "south": true, "east": true, "west": true}, Color(0.3, 0.2, 0.13))
+	_add_house_room("PuzzleNicheWest", Vector3(-7, 0, -69), Vector2(6, 6), {"east": true}, Color(0.25, 0.17, 0.12))
+	_add_house_room("PuzzleNicheEast", Vector3(7, 0, -69), Vector2(6, 6), {"west": true}, Color(0.25, 0.17, 0.12))
+	_add_house_room("BossApproach", Vector3(0, 0, -77), Vector2(8, 5), {"north": true, "south": true}, Color(0.31, 0.16, 0.12))
+	_add_house_room("BossChamber", Vector3(0, 0, -91), Vector2(20, 23), {"south": true}, Color(0.38, 0.17, 0.12), $BossArenaVisual)
 	_add_drum_marker(Vector3(0, 0.2, -11.5))
 	_add_drum_marker(Vector3(0, 0.2, -58.0))
-	_add_door_frame(-24.5, 7.0)
-	_add_door_frame(-46.0, 7.0)
-	_add_door_frame(-76.0, 7.0)
 	_build_house_dressing()
 
 func _build_house_dressing() -> void:
-	# A real front facade frames the entrance instead of leaving the arrival side open.
-	_add_solid_box($EnvironmentGeometry, "FrontFacadeLeft", Vector3(6.0, 5.5, 0.8), Vector3(-6.0, 2.75, 28.8), Color(0.16, 0.075, 0.05))
-	_add_solid_box($EnvironmentGeometry, "FrontFacadeRight", Vector3(6.0, 5.5, 0.8), Vector3(6.0, 2.75, 28.8), Color(0.16, 0.075, 0.05))
-	_add_solid_box($EnvironmentGeometry, "FrontFacadeLintel", Vector3(6.8, 1.1, 0.8), Vector3(0, 5.25, 28.8), Color(0.22, 0.09, 0.055))
-	_add_visual_box($EnvironmentGeometry, "Roof", Vector3(22.0, 0.8, 25.0), Vector3(0, 6.35, 18.0), Color(0.07, 0.035, 0.03), Vector3(0, 0, deg_to_rad(-2.0)))
-	_add_visual_box($EnvironmentGeometry, "EntryRug", Vector3(5.5, 0.05, 8.0), Vector3(0, 0.04, 18.0), Color(0.42, 0.08, 0.045))
-	_add_visual_box($EnvironmentGeometry, "EntryPath", Vector3(3.2, 0.07, 15.0), Vector3(0, 0.08, 9.5), Color(0.72, 0.24, 0.07))
-	_add_visual_box($EnvironmentGeometry, "EntryThresholdGlow", Vector3(5.4, 0.12, 0.18), Vector3(0, 0.16, 10.0), Color(1.0, 0.5, 0.08))
-	_add_room_label("ENTRY HALL", Vector3(0, 4.6, 25.8), Color(1.0, 0.72, 0.35))
-	_add_room_label("FOLLOW THE LIT PATH", Vector3(0, 3.4, 14.5), Color(1.0, 0.9, 0.45))
-	_add_room_label("ROTATING DRUM CHAMBER", Vector3(0, 5.0, -11.5), Color(1.0, 0.34, 0.18))
-	_add_room_label("SLEEPING WING", Vector3(-16, 4.2, -35), Color(0.65, 0.78, 0.9))
-	_add_room_label("STORAGE WING", Vector3(16, 4.2, -35), Color(0.8, 0.62, 0.35))
-	_add_room_label("SHIFTING GALLERY", Vector3(0, 4.8, -35), Color(1.0, 0.55, 0.22))
-	_add_room_label("DRUM HEART", Vector3(0, 5.0, -90), Color(1.0, 0.18, 0.1))
+	_add_visual_box($EnvironmentGeometry, "EntryRunner", Vector3(2.2, 0.05, 8.0), Vector3(0, 0.06, 22), Color(0.48, 0.12, 0.055))
+	_add_table(Vector3(-3.1, 0, 20.5), false)
+	_add_visual_box($EnvironmentGeometry, "ShoeBench", Vector3(2.4, 0.55, 0.65), Vector3(3.1, 0.3, 24.8), Color(0.3, 0.16, 0.08))
+	_add_visual_box($EnvironmentGeometry, "AbandonedSandals", Vector3(0.55, 0.08, 0.85), Vector3(2.6, 0.11, 23.5), Color(0.16, 0.1, 0.06), Vector3(0, 0.22, 0))
+	_add_visual_box($EnvironmentGeometry, "AbandonedSandals", Vector3(0.55, 0.08, 0.85), Vector3(3.35, 0.11, 23.2), Color(0.16, 0.1, 0.06), Vector3(0, -0.18, 0))
+	_add_open_sliding_door(Vector3(-5.02, 0, 22), true)
+	_add_open_sliding_door(Vector3(5.02, 0, 22), true)
+	_add_room_sign("TEA ROOM", Vector3(-4.82, 3.25, 22), Color(1.0, 0.8, 0.42), Vector3(0, 90, 0))
+	_add_room_sign("FAMILY ROOM", Vector3(4.82, 3.25, 22), Color(1.0, 0.8, 0.42), Vector3(0, -90, 0))
+	_add_room_sign("ENTRANCE HALL", Vector3(0, 3.25, 17.2), Color(1.0, 0.78, 0.4))
+	_add_room_sign("DRUM CHAMBER", Vector3(0, 3.2, -5.9), Color(1.0, 0.42, 0.22))
+	_add_room_sign("SHIFTING GALLERY", Vector3(0, 3.2, -28.2), Color(1.0, 0.58, 0.28))
+	_add_room_sign("DRUM HEART", Vector3(0, 3.3, -80.1), Color(1.0, 0.28, 0.16))
 	_add_drum_prop(Vector3(0, 0.85, -11.5))
 	_add_drum_prop(Vector3(0, 0.85, -58.0))
 	_add_drum_prop(Vector3(0, 0.85, -90.0))
-	_add_gallery_props()
-	_add_room_light(Vector3(0, 4.5, 18), Color(1.0, 0.5, 0.22), 2.2, 18.0)
-	_add_room_light(Vector3(0, 4.5, -11.5), Color(1.0, 0.18, 0.08), 3.0, 17.0)
-	_add_room_light(Vector3(-16, 3.8, -35), Color(0.25, 0.45, 1.0), 1.8, 13.0)
-	_add_room_light(Vector3(16, 3.8, -35), Color(1.0, 0.42, 0.12), 1.8, 13.0)
-	_add_room_light(Vector3(0, 4.5, -58), Color(0.85, 0.1, 0.04), 2.6, 15.0)
-	_add_room_light(Vector3(0, 5.0, -90), Color(1.0, 0.08, 0.02), 3.5, 24.0)
+	_add_side_room_props()
+	_add_entrance_room_props()
+	_add_tatami_room_props()
+	_add_puzzle_room_props()
+	_add_combat_room_props()
+	_add_storage_props()
+	_add_boss_room_props()
+	for lantern_position in [Vector3(-3.7, 3.25, 22), Vector3(3.7, 3.25, 22), Vector3(0, 3.2, 14.5), Vector3(0, 3.2, 2), Vector3(0, 3.2, -22), Vector3(-5.8, 3.35, -35), Vector3(5.8, 3.35, -35), Vector3(0, 3.2, -47), Vector3(0, 3.2, -69), Vector3(0, 3.3, -77)]:
+		_add_lantern(lantern_position, Color(1.0, 0.52, 0.22), 1.8, 7.5)
+	_add_lantern(Vector3(-7.5, 4.0, -91), Color(1.0, 0.22, 0.08), 2.6, 12.0)
+	_add_lantern(Vector3(7.5, 4.0, -91), Color(1.0, 0.22, 0.08), 2.6, 12.0)
 
-func _add_gallery_props() -> void:
-	for z_position in [-39.0, -34.0, -29.0]:
-		_add_visual_box($EnvironmentGeometry, "GalleryBeam", Vector3(1.0, 3.8, 1.0), Vector3(-7.0, 1.9, z_position), Color(0.11, 0.05, 0.035))
-		_add_visual_box($EnvironmentGeometry, "GalleryBeam", Vector3(1.0, 3.8, 1.0), Vector3(7.0, 1.9, z_position), Color(0.11, 0.05, 0.035))
+func _add_side_room_props() -> void:
+	for z_position in [8.0, 10.5]:
+		_add_visual_box($EnvironmentGeometry, "TatamiMat", Vector3(2.35, 0.08, 1.8), Vector3(-7, 0.08, z_position), Color(0.5, 0.48, 0.28))
+	_add_visual_box($EnvironmentGeometry, "AbandonedBedding", Vector3(3.6, 0.18, 1.5), Vector3(-7, 0.15, 11.7), Color(0.24, 0.36, 0.45))
+	_add_table(Vector3(7, 0, 9.5), true)
+	_add_visual_box($EnvironmentGeometry, "FallenStool", Vector3(0.85, 0.75, 0.85), Vector3(8.4, 0.42, 11.2), Color(0.3, 0.15, 0.07), Vector3(0, 0, 0.65))
+	_add_visual_box($EnvironmentGeometry, "DamagedPanel", Vector3(2.5, 2.8, 0.16), Vector3(5.8, 1.55, 12.7), Color(0.55, 0.46, 0.33), Vector3(0, 0.2, 0.08))
+
+func _add_tatami_room_props() -> void:
+	for x_position in [-2.2, 0.2, 2.2]:
+		_add_visual_box($EnvironmentGeometry, "CentralTatami", Vector3(2.0, 0.08, 1.85), Vector3(x_position, 0.07, 9.5), Color(0.57, 0.54, 0.3))
+	_add_table(Vector3(0, 0, 9.5), false)
+	_add_visual_box($EnvironmentGeometry, "FloorCushion", Vector3(0.8, 0.16, 0.8), Vector3(-2.65, 0.13, 8.4), Color(0.42, 0.18, 0.12))
+	_add_visual_box($EnvironmentGeometry, "FloorCushion", Vector3(0.8, 0.16, 0.8), Vector3(2.65, 0.13, 10.6), Color(0.42, 0.18, 0.12))
+
+func _add_puzzle_room_props() -> void:
+	_add_visual_box($EnvironmentGeometry, "PuzzlePedestal", Vector3(1.4, 1.0, 1.4), Vector3(0, 0.5, -69), Color(0.32, 0.12, 0.055))
+	_add_visual_box($EnvironmentGeometry, "PuzzleSeal", Vector3(0.9, 0.12, 0.9), Vector3(0, 1.06, -69), Color(0.7, 0.12, 0.05))
 	for side in [-1.0, 1.0]:
-		for index in 3:
-			_add_visual_box($EnvironmentGeometry, "StorageCrate", Vector3(1.6, 1.1, 1.4), Vector3(side * (15.5 + index * 1.8), 0.55, -38.0 + index * 2.5), Color(0.36, 0.2, 0.08))
-	_add_visual_box($EnvironmentGeometry, "SleepingMat", Vector3(4.0, 0.1, 1.7), Vector3(-16, 0.08, -35), Color(0.18, 0.34, 0.48))
-	_add_visual_box($EnvironmentGeometry, "SleepingMat", Vector3(4.0, 0.1, 1.7), Vector3(-16, 0.08, -38), Color(0.18, 0.34, 0.48))
+		_add_visual_box($EnvironmentGeometry, "PuzzleWallDrum", Vector3(0.16, 1.5, 1.5), Vector3(side * 3.82, 2.2, -69), Color(0.44, 0.06, 0.025))
+	_add_visual_box($EnvironmentGeometry, "PuzzleNicheCrate", Vector3(1.1, 1.1, 1.1), Vector3(-7, 0.55, -70), Color(0.38, 0.2, 0.08))
+	_add_visual_box($EnvironmentGeometry, "PuzzleNicheShelf", Vector3(1.8, 2.3, 0.55), Vector3(7.5, 1.15, -68), Color(0.28, 0.13, 0.06))
+
+func _add_entrance_room_props() -> void:
+	for x_position in [-8.9, -7.1]:
+		for z_position in [20.3, 22.3, 24.3]:
+			_add_visual_box($EnvironmentGeometry, "TeaRoomTatami", Vector3(1.55, 0.08, 1.75), Vector3(x_position, 0.07, z_position), Color(0.58, 0.55, 0.3))
+	_add_table(Vector3(-8, 0, 22.2), false)
+	_add_visual_box($EnvironmentGeometry, "TeaCup", Vector3(0.22, 0.18, 0.22), Vector3(-8.35, 0.9, 22.2), Color(0.62, 0.52, 0.38))
+	_add_visual_box($EnvironmentGeometry, "TeaCup", Vector3(0.22, 0.18, 0.22), Vector3(-7.65, 0.9, 22.2), Color(0.62, 0.52, 0.38))
+	_add_visual_box($EnvironmentGeometry, "WallScroll", Vector3(2.1, 2.3, 0.08), Vector3(-8, 2.5, 18.12), Color(0.7, 0.61, 0.43))
+	_add_visual_box($EnvironmentGeometry, "ScrollMark", Vector3(0.18, 1.35, 0.04), Vector3(-8, 2.5, 18.05), Color(0.25, 0.08, 0.045), Vector3(0, 0, 0.35))
+	_add_visual_box($EnvironmentGeometry, "FamilyBedding", Vector3(3.8, 0.18, 1.55), Vector3(8, 0.13, 20.2), Color(0.3, 0.4, 0.52))
+	_add_visual_box($EnvironmentGeometry, "FamilyBedding", Vector3(3.8, 0.18, 1.55), Vector3(8, 0.13, 23.0), Color(0.42, 0.28, 0.38))
+	_add_visual_box($EnvironmentGeometry, "ClothingChest", Vector3(2.0, 1.15, 1.1), Vector3(9.4, 0.58, 24.8), Color(0.38, 0.19, 0.08))
+	_add_visual_box($EnvironmentGeometry, "ChestBand", Vector3(2.05, 0.12, 1.15), Vector3(9.4, 0.78, 24.8), Color(0.18, 0.06, 0.03))
+	_add_visual_box($EnvironmentGeometry, "AbandonedBundle", Vector3(1.25, 0.8, 1.0), Vector3(6.8, 0.42, 24.7), Color(0.34, 0.16, 0.22), Vector3(0.1, 0.25, 0.12))
+	_add_lantern(Vector3(-8, 3.35, 22), Color(1.0, 0.55, 0.22), 2.0, 7.0)
+	_add_lantern(Vector3(8, 3.35, 22), Color(1.0, 0.48, 0.2), 2.0, 7.0)
+
+func _add_open_sliding_door(position: Vector3, along_z: bool) -> void:
+	var panel_size := Vector3(0.12, 2.8, 1.25) if along_z else Vector3(1.25, 2.8, 0.12)
+	var first_offset := Vector3(0, 1.4, -1.75) if along_z else Vector3(-1.75, 1.4, 0)
+	var second_offset := Vector3(0, 1.4, 1.75) if along_z else Vector3(1.75, 1.4, 0)
+	for offset in [first_offset, second_offset]:
+		_add_visual_box($EnvironmentGeometry, "OpenSlidingPanel", panel_size, position + offset, Color(0.62, 0.54, 0.4))
+		var crossbar_size := Vector3(0.14, 0.1, 1.28) if along_z else Vector3(1.28, 0.1, 0.14)
+		for height in [0.65, 1.35, 2.05]:
+			_add_visual_box($EnvironmentGeometry, "SlidingPanelBar", crossbar_size, position + offset + Vector3(0, height - 1.4, 0), Color(0.22, 0.08, 0.035))
+
+func _add_combat_room_props() -> void:
+	for x_position in [-5.7, 5.7]:
+		for z_position in [-39.8, -30.2]:
+			_add_visual_box($EnvironmentGeometry, "CombatPillar", Vector3(0.55, 4.2, 0.55), Vector3(x_position, 2.1, z_position), Color(0.24, 0.1, 0.055))
+	_add_visual_box($EnvironmentGeometry, "FallenBeam", Vector3(6.5, 0.42, 0.45), Vector3(-2.0, 0.35, -39.8), Color(0.3, 0.12, 0.055), Vector3(0, 0.28, 0.12))
+	for scratch_index in 4:
+		_add_visual_box($EnvironmentGeometry, "ClawScratch", Vector3(0.08, 1.3, 0.035), Vector3(-6.68 + scratch_index * 0.14, 2.2 + scratch_index * 0.08, -35), Color(0.65, 0.12, 0.06), Vector3(0, 0, -0.22))
+
+func _add_storage_props() -> void:
+	for shelf_z in [-38.0, -34.8, -31.6]:
+		_add_visual_box($EnvironmentGeometry, "StorageShelf", Vector3(0.65, 2.6, 2.2), Vector3(12.8, 1.3, shelf_z), Color(0.27, 0.14, 0.065))
+	for crate_data in [[9.8, -38.0, 0.85], [10.3, -35.8, 1.15], [9.5, -33.4, 0.7], [11.2, -31.8, 0.95]]:
+		var crate_size := float(crate_data[2])
+		_add_visual_box($EnvironmentGeometry, "StorageCrate", Vector3(crate_size, crate_size, crate_size), Vector3(float(crate_data[0]), crate_size * 0.5, float(crate_data[1])), Color(0.42, 0.23, 0.09))
+	_add_visual_box($EnvironmentGeometry, "BrokenTableTop", Vector3(3.2, 0.18, 1.6), Vector3(-11, 0.55, -35), Color(0.32, 0.15, 0.07), Vector3(0.12, 0.25, 0.35))
+	_add_visual_box($EnvironmentGeometry, "BrokenTableLeg", Vector3(0.22, 1.2, 0.22), Vector3(-12, 0.6, -34.4), Color(0.25, 0.11, 0.05), Vector3(0.35, 0, 0.25))
+
+func _add_boss_room_props() -> void:
+	for x_position in [-8.4, 8.4]:
+		for z_position in [-98.5, -90.5, -82.5]:
+			_add_visual_box($BossArenaVisual, "BossTimber", Vector3(0.75, 4.8, 0.75), Vector3(x_position, 2.4, z_position), Color(0.28, 0.075, 0.04))
+	for x_position in [-5.5, 0.0, 5.5]:
+		_add_visual_box($BossArenaVisual, "CeilingBeam", Vector3(0.45, 0.45, 19.0), Vector3(x_position, 4.25, -91), Color(0.24, 0.065, 0.035))
+	for motif_x in [-6.0, -3.0, 3.0, 6.0]:
+		_add_drum_wall_motif(Vector3(motif_x, 2.4, -101.9))
+	_add_visual_box($BossArenaVisual, "BossDais", Vector3(7.0, 0.22, 4.0), Vector3(0, 0.12, -96), Color(0.42, 0.12, 0.055))
+
+func _add_table(position: Vector3, damaged: bool) -> void:
+	var tilt := Vector3(0.12, 0, 0.18) if damaged else Vector3.ZERO
+	_add_visual_box($EnvironmentGeometry, "LowTable", Vector3(2.6, 0.18, 1.5), position + Vector3(0, 0.72, 0), Color(0.33, 0.16, 0.07), tilt)
+	for leg_offset in [Vector3(-0.9, 0.35, -0.45), Vector3(0.9, 0.35, -0.45), Vector3(-0.9, 0.35, 0.45), Vector3(0.9, 0.35, 0.45)]:
+		_add_visual_box($EnvironmentGeometry, "TableLeg", Vector3(0.16, 0.7, 0.16), position + leg_offset, Color(0.25, 0.11, 0.045), tilt)
+
+func _add_lantern(position: Vector3, color: Color, energy: float, range_value: float) -> void:
+	_add_visual_box($EnvironmentGeometry, "LanternGlow", Vector3(0.32, 0.48, 0.32), position, Color(1.0, 0.62, 0.25))
+	var frame_color := Color(0.3, 0.09, 0.035)
+	_add_visual_box($EnvironmentGeometry, "LanternTop", Vector3(0.55, 0.08, 0.55), position + Vector3(0, 0.32, 0), frame_color)
+	_add_visual_box($EnvironmentGeometry, "LanternBottom", Vector3(0.55, 0.08, 0.55), position + Vector3(0, -0.32, 0), frame_color)
+	for corner in [Vector3(-0.24, 0, -0.24), Vector3(0.24, 0, -0.24), Vector3(-0.24, 0, 0.24), Vector3(0.24, 0, 0.24)]:
+		_add_visual_box($EnvironmentGeometry, "LanternPost", Vector3(0.06, 0.65, 0.06), position + corner, frame_color)
+	_add_room_light(position, color, energy, range_value)
+
+func _add_drum_wall_motif(position: Vector3) -> void:
+	var motif := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.75
+	mesh.bottom_radius = 0.75
+	mesh.height = 0.18
+	mesh.material = _make_material(Color(0.48, 0.055, 0.025), 0.8)
+	motif.name = "DrumWallMotif"
+	motif.mesh = mesh
+	motif.position = position
+	motif.rotation_degrees.x = 90.0
+	$BossArenaVisual.add_child(motif)
 
 func _add_drum_prop(position: Vector3) -> void:
 	var drum := MeshInstance3D.new()
@@ -552,25 +673,24 @@ func _add_drum_prop(position: Vector3) -> void:
 	mesh.top_radius = 0.95
 	mesh.bottom_radius = 0.95
 	mesh.height = 0.7
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.38, 0.035, 0.018)
-	material.emission_enabled = true
-	material.emission = Color(0.22, 0.008, 0.002)
-	mesh.material = material
+	mesh.material = _make_material(Color(0.48, 0.055, 0.025), 0.72)
 	drum.mesh = mesh
 	drum.position = position
 	drum.rotation_degrees.x = 90.0
 	$EnvironmentGeometry.add_child(drum)
 	_add_visual_box($EnvironmentGeometry, "DrumStand", Vector3(2.3, 0.18, 1.1), position + Vector3(0, -0.5, 0), Color(0.12, 0.045, 0.025))
 
-func _add_room_label(text_value: String, position: Vector3, color: Color) -> void:
+func _add_room_sign(text_value: String, position: Vector3, color: Color, rotation_degrees: Vector3 = Vector3.ZERO) -> void:
+	var board_rotation := Vector3(deg_to_rad(rotation_degrees.x), deg_to_rad(rotation_degrees.y), deg_to_rad(rotation_degrees.z))
+	_add_visual_box($EnvironmentGeometry, "%sSignBoard" % text_value.replace(" ", ""), Vector3(2.4, 0.5, 0.12), position + Vector3(0, 0, 0.08), Color(0.34, 0.16, 0.065), board_rotation)
 	var label := Label3D.new()
 	label.text = text_value
-	label.position = position
-	label.font_size = 32
-	label.outline_size = 8
+	label.position = position + Vector3(0, 0, 0.18)
+	label.font_size = 14
+	label.outline_size = 3
 	label.modulate = color
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	label.rotation_degrees = rotation_degrees
 	$EnvironmentGeometry.add_child(label)
 
 func _add_room_light(position: Vector3, color: Color, energy: float, range_value: float) -> void:
@@ -579,25 +699,76 @@ func _add_room_light(position: Vector3, color: Color, energy: float, range_value
 	light.light_color = color
 	light.light_energy = energy
 	light.omni_range = range_value
-	light.shadow_enabled = true
+	light.shadow_enabled = false
 	$EnvironmentGeometry.add_child(light)
 
 func _add_visual_box(parent: Node, label: String, size: Vector3, position: Vector3, color: Color, rotation: Vector3 = Vector3.ZERO) -> MeshInstance3D:
 	var mesh := BoxMesh.new()
 	mesh.size = size
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	material.roughness = 0.9
-	material.emission_enabled = true
-	material.emission = color * 0.65
-	mesh.material = material
+	mesh.material = _make_material(color, 0.28)
 	var visual := MeshInstance3D.new()
 	visual.name = label
 	visual.mesh = mesh
 	visual.position = position
 	visual.rotation = rotation
-	parent.add_child(visual)
+	parent.add_child(visual, true)
 	return visual
+
+func _make_material(color: Color, emission_strength: float = 0.0) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.82
+	if emission_strength > 0.0:
+		material.emission_enabled = true
+		material.emission = color * emission_strength
+	return material
+
+func _add_house_room(label: String, center: Vector3, footprint: Vector2, openings: Dictionary, floor_color: Color, parent: Node = $EnvironmentGeometry) -> void:
+	var room := Node3D.new()
+	room.name = label
+	room.position = center
+	room.set_meta("house_space", true)
+	room.set_meta("footprint", footprint)
+	parent.add_child(room)
+	var width := footprint.x
+	var length := footprint.y
+	var wall_color := Color(0.49, 0.41, 0.3)
+	var timber_color := Color(0.2, 0.085, 0.045)
+	_add_solid_box(room, "WoodenFloor", Vector3(width, 0.4, length), Vector3(0, -0.2, 0), floor_color)
+	_add_visual_box(room, "PlasterCeiling", Vector3(width, 0.25, length), Vector3(0, 4.5, 0), Color(0.32, 0.27, 0.22))
+	_add_wall_z(room, "NorthWall", width, -length * 0.5, bool(openings.get("north", false)), wall_color, timber_color)
+	_add_wall_z(room, "SouthWall", width, length * 0.5, bool(openings.get("south", false)), wall_color, timber_color)
+	_add_wall_x(room, "WestWall", length, -width * 0.5, bool(openings.get("west", false)), wall_color, timber_color)
+	_add_wall_x(room, "EastWall", length, width * 0.5, bool(openings.get("east", false)), wall_color, timber_color)
+	for corner in [Vector3(-width * 0.5 + 0.18, 2.25, -length * 0.5 + 0.18), Vector3(width * 0.5 - 0.18, 2.25, -length * 0.5 + 0.18), Vector3(-width * 0.5 + 0.18, 2.25, length * 0.5 - 0.18), Vector3(width * 0.5 - 0.18, 2.25, length * 0.5 - 0.18)]:
+		_add_visual_box(room, "TimberPost", Vector3(0.32, 4.5, 0.32), corner, timber_color)
+	_add_visual_box(room, "CeilingBeam", Vector3(width, 0.3, 0.35), Vector3(0, 4.28, 0), timber_color)
+	for board_index in range(1, int(length)):
+		_add_visual_box(room, "FloorBoardSeam", Vector3(width - 0.3, 0.012, 0.025), Vector3(0, 0.012, -length * 0.5 + float(board_index)), Color(0.12, 0.07, 0.04))
+
+func _add_wall_z(parent: Node, label: String, width: float, z_position: float, has_door: bool, wall_color: Color, timber_color: Color) -> void:
+	var door_width := minf(2.5, width * 0.55)
+	if has_door:
+		var segment_width := (width - door_width) * 0.5
+		_add_solid_box(parent, "%sLeft" % label, Vector3(segment_width, 4.5, 0.3), Vector3(-(door_width + segment_width) * 0.5, 2.25, z_position), wall_color)
+		_add_solid_box(parent, "%sRight" % label, Vector3(segment_width, 4.5, 0.3), Vector3((door_width + segment_width) * 0.5, 2.25, z_position), wall_color)
+		_add_visual_box(parent, "%sLintel" % label, Vector3(door_width + 0.35, 0.32, 0.42), Vector3(0, 3.35, z_position), timber_color)
+		_add_visual_box(parent, "%sPost" % label, Vector3(0.24, 3.4, 0.42), Vector3(-door_width * 0.5, 1.7, z_position), timber_color)
+		_add_visual_box(parent, "%sPost" % label, Vector3(0.24, 3.4, 0.42), Vector3(door_width * 0.5, 1.7, z_position), timber_color)
+	else:
+		_add_solid_box(parent, label, Vector3(width, 4.5, 0.3), Vector3(0, 2.25, z_position), wall_color)
+
+func _add_wall_x(parent: Node, label: String, length: float, x_position: float, has_door: bool, wall_color: Color, timber_color: Color) -> void:
+	var door_width := minf(2.5, length * 0.55)
+	if has_door:
+		var segment_length := (length - door_width) * 0.5
+		_add_solid_box(parent, "%sFront" % label, Vector3(0.3, 4.5, segment_length), Vector3(x_position, 2.25, -(door_width + segment_length) * 0.5), wall_color)
+		_add_solid_box(parent, "%sBack" % label, Vector3(0.3, 4.5, segment_length), Vector3(x_position, 2.25, (door_width + segment_length) * 0.5), wall_color)
+		_add_visual_box(parent, "%sLintel" % label, Vector3(0.42, 0.32, door_width + 0.35), Vector3(x_position, 3.35, 0), timber_color)
+		_add_visual_box(parent, "%sPost" % label, Vector3(0.42, 3.4, 0.24), Vector3(x_position, 1.7, -door_width * 0.5), timber_color)
+		_add_visual_box(parent, "%sPost" % label, Vector3(0.42, 3.4, 0.24), Vector3(x_position, 1.7, door_width * 0.5), timber_color)
+	else:
+		_add_solid_box(parent, label, Vector3(0.3, 4.5, length), Vector3(x_position, 2.25, 0), wall_color)
 
 func _build_boss_arena_states() -> void:
 	var layouts := [
@@ -611,20 +782,21 @@ func _build_boss_arena_states() -> void:
 		state_root.name = "ArenaState%d" % state
 		$BossArenaStates.add_child(state_root)
 		for obstacle_position: Vector3 in layouts[state]:
-			_add_solid_box(state_root, "ShiftedObstacle", Vector3(2.2, 2.0, 2.2), obstacle_position, Color(0.34, 0.12 + state * 0.025, 0.08))
-		var marker := MeshInstance3D.new()
-		var marker_mesh := BoxMesh.new()
-		marker_mesh.size = Vector3(10.0, 0.08, 0.35)
-		var marker_material := StandardMaterial3D.new()
-		marker_material.albedo_color = Color(0.72, 0.08, 0.04)
-		marker_material.emission_enabled = true
-		marker_material.emission = Color(0.38, 0.02, 0.01)
-		marker_mesh.material = marker_material
-		marker.mesh = marker_mesh
-		marker.position = Vector3(0, 0.08, -91)
-		marker.rotation_degrees.y = float(state * 45)
-		$BossShiftVisual.add_child(marker)
+			_add_solid_box(state_root, "ShiftedWallPanel", Vector3(3.2, 1.4, 0.65), obstacle_position, Color(0.46, 0.34 + state * 0.015, 0.23))
+	_add_boss_floor_emblem()
 	_apply_boss_room_state(0)
+
+func _add_boss_floor_emblem() -> void:
+	var emblem := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 2.2
+	mesh.bottom_radius = 2.2
+	mesh.height = 0.045
+	mesh.material = _make_material(Color(0.34, 0.075, 0.035), 0.22)
+	emblem.name = "BossDrumFloorEmblem"
+	emblem.mesh = mesh
+	emblem.position = Vector3(0, 0.045, -91)
+	$BossShiftVisual.add_child(emblem)
 
 func _apply_boss_room_state(state: int) -> void:
 	boss_room_state = clampi(state, 0, 3)

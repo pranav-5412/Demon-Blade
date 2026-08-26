@@ -56,6 +56,18 @@ func _run() -> void:
 	await get_tree().create_timer(2.3).timeout
 	_check(bool(GameManager.save_data.story_flags.get("strange_house_found", false)), "House arrival persists")
 	_check(journey.objective_label.text.contains("Investigate the strange house."), "House arrival sets the exact investigation objective")
+	_check(GameManager.save_data.story_flags.get("trio_journey_checkpoint", "") == "strange_house_approach", "House arrival saves the dedicated exterior checkpoint")
+	_check(journey.last_checkpoint.distance_to(journey._get_house_approach_checkpoint()) < 0.01, "Void recovery returns to the house approach after arrival")
+	_check(is_instance_valid(journey.house_entry_zone), "Strange House has a dedicated Area3D entrance zone")
+	_check(journey.house_entry_zone.get_node_or_null("CollisionShape3D") != null, "Strange House entrance zone has collision")
+	_check(journey.DRUM_HOUSE_SCENE == "res://scenes/episode_01/drum_house.tscn", "Strange House entry targets the Drum House interior")
+	journey.player.global_position = journey.house_entry_position
+	for frame in 3:
+		await get_tree().physics_frame
+	await get_tree().process_frame
+	_check(journey._is_player_at_house_entry(), "Player is detected throughout the visible house doorway zone")
+	journey._process(0.0)
+	_check(journey.interaction_label.visible and journey.interaction_label.text == "E — Enter Strange House", "House doorway shows the exact E entry prompt")
 	journey.queue_free()
 	await get_tree().process_frame
 
@@ -67,6 +79,34 @@ func _run() -> void:
 	add_child(house)
 	await get_tree().process_frame
 	_check(house.get_node("EnvironmentGeometry").get_child_count() >= 25, "Drum House contains multiple connected rooms and corridors")
+	var environment := house.get_node("EnvironmentGeometry") as Node3D
+	var house_spaces: Array[Node] = []
+	for child in environment.get_children():
+		if child.has_meta("house_space"):
+			house_spaces.append(child)
+	_check(house_spaces.size() >= 18, "Drum House contains at least ten clearly structured spaces")
+	for required_space in ["EntranceHall", "MainCorridor", "TatamiRoom", "StorageRoom", "DamagedRoom", "DemonCombatRoom", "PuzzleRoom"]:
+		_check(environment.has_node(required_space), "House layout includes %s" % required_space)
+	_check(house.has_node("PuzzleRoom/RotatingRoomA"), "House layout includes physical RotatingRoomA")
+	_check(house.has_node("TrapRoom/RotatingRoomB"), "House layout includes physical RotatingRoomB")
+	_check(house.has_node("BossArenaVisual/BossChamber"), "House layout includes physical BossChamber")
+	var entrance_hall := environment.get_node("EntranceHall") as Node3D
+	_check(entrance_hall.has_node("WoodenFloor") and entrance_hall.has_node("PlasterCeiling"), "Entrance Hall has a recognizable floor and ceiling")
+	_check(entrance_hall.find_children("*Wall*", "MeshInstance3D", true, false).size() >= 4, "Entrance Hall has framed wall panels and door openings")
+	_check(environment.find_children("*LanternGlow*", "MeshInstance3D", true, false).size() >= 10, "Lanterns visibly guide the dungeon route")
+	_check(environment.find_children("*LowTable*", "MeshInstance3D", true, false).size() >= 2, "House includes furnished living spaces")
+	_check(environment.find_children("*StorageCrate*", "MeshInstance3D", true, false).size() >= 4, "Storage room contains environmental clutter")
+	_check(environment.find_children("*TeaRoomTatami*", "MeshInstance3D", true, false).size() >= 6, "A furnished room is visible directly beside the entrance")
+	_check(environment.find_children("*FamilyBedding*", "MeshInstance3D", true, false).size() >= 2, "The second entrance room has a distinct identity")
+	_check(house.get_node("BossArenaVisual").find_children("*BossTimber*", "MeshInstance3D", true, false).size() >= 6, "Boss chamber has distinctive structural framing")
+	_check(house.get_node("PuzzleRoom/RotatingRoomA").has_meta("furnished_rotating_room"), "Rotating chamber uses a dedicated furnished room root")
+	_check(house.get_node("PuzzleRoom/RotatingRoomA").find_child("TatamiMat", true, false) != null, "Rotating chamber contains recognizable interior furnishings")
+	_check(house.get_node("PuzzleRoom/RotatingRoomA/RotationDust") != null, "Room rotation includes a dust reaction")
+	_check(house.get_node("TrapRoom/RotatingRoomB").get_meta("dimensions") == Vector3(10, 4.5, 10), "Second rotating room has a real compact room volume")
+	for required_room in ["EntranceHall", "MainCorridor", "TatamiRoom", "StorageRoom", "DamagedRoom", "DemonCombatRoom", "PuzzleRoom"]:
+		var room := environment.get_node(required_room) as Node3D
+		_check(room.has_meta("footprint") and room.has_node("WoodenFloor") and room.has_node("PlasterCeiling"), "%s is a physical collision-backed room shell" % required_room)
+	_check(house.player.spring_arm.spring_length <= 3.1 and house.player.spring_arm.collision_mask == 1, "Indoor camera uses wall collision and a shorter arm")
 	_check(house.get_node("PuzzleRoom").orientation_state == 0, "Puzzle chamber starts in a known orientation")
 	_check(not house.get_node("PuzzleRoom").route_open, "Puzzle exit is closed before solving")
 	_check(house.get_node("TrapRoom") != null, "A second controlled shifting chamber exists")
@@ -75,6 +115,12 @@ func _run() -> void:
 	for frame in 30:
 		await get_tree().physics_frame
 	_check(house.player.is_on_floor(), "Drum House spawn has valid floor collision")
+	var supported_route := true
+	for route_point in [Vector3(0, 1.1, 22), Vector3(0, 1.1, 14.5), Vector3(0, 1.1, 9.5), Vector3(0, 1.1, 2), Vector3(0, 1.1, -4.75), Vector3(0, 1.1, -11.5), Vector3(0, 1.1, -22), Vector3(0, 1.1, -27), Vector3(0, 1.1, -35), Vector3(0, 1.1, -47), Vector3(0, 1.1, -58), Vector3(0, 1.1, -69), Vector3(0, 1.1, -77), Vector3(0, 1.1, -91)]:
+		supported_route = supported_route and _has_floor_below(house.get_world_3d(), route_point)
+	_check(supported_route, "Every major dungeon space has collision-backed floor support")
+	_check(_ray_hits_world(house.get_world_3d(), Vector3(0, 1.5, 22), Vector3(14, 1.5, 22)), "Entrance rooms are enclosed against the exterior void")
+	_check(float(house.companions.get("side_spacing")) < 1.0 and float(house.companions.get("catch_up_distance")) <= 8.0, "Companions use doorway-safe indoor spacing and recovery")
 
 	house.progress = 1
 	house.puzzle_step = 0
@@ -247,6 +293,16 @@ func _route_has_horizontal_variation(points: Array) -> bool:
 		if current_sign != 0:
 			previous_sign = current_sign
 	return direction_changes >= 8
+
+func _has_floor_below(world: World3D, position: Vector3) -> bool:
+	var query := PhysicsRayQueryParameters3D.create(position + Vector3(0, 3, 0), position + Vector3(0, -3, 0))
+	query.collide_with_areas = false
+	return not world.direct_space_state.intersect_ray(query).is_empty()
+
+func _ray_hits_world(world: World3D, from: Vector3, to: Vector3) -> bool:
+	var query := PhysicsRayQueryParameters3D.create(from, to)
+	query.collide_with_areas = false
+	return not world.direct_space_state.intersect_ray(query).is_empty()
 
 func _check(condition: bool, label: String) -> void:
 	checks += 1

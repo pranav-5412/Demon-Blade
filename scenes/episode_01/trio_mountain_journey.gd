@@ -33,6 +33,8 @@ const ROUTE_POINTS := [
 const SECTION_POINT_INDICES := [4, 8, 12, 16, 20, 24]
 const ROUTE_HORIZONTAL_SCALE := 1.65
 const ROUTE_DEPTH_SCALE := 2.45
+const HOUSE_ENTRY_PROMPT := "E — Enter Strange House"
+const HOUSE_ENTRY_HALF_EXTENTS := Vector3(3.5, 3.0, 3.0)
 
 @onready var player: ThirdPersonPlayer = $Player
 @onready var party: PartyCharacterController = $Player/PartyCharacterController
@@ -60,6 +62,8 @@ var danger_spawned := false
 var strange_house_found := false
 var transition_active := false
 var feedback_time := 0.0
+var house_entry_zone: Area3D
+var house_entry_position := Vector3.ZERO
 
 func _ready() -> void:
 	GameManager.set_game_state(GameManager.GameState.GAMEPLAY)
@@ -82,7 +86,8 @@ func _process(delta: float) -> void:
 	if transition_active:
 		return
 	if strange_house_found:
-		interaction_label.visible = player.global_position.distance_to(route_points[-1] + Vector3(0, 1, -7)) <= 4.0
+		interaction_label.text = HOUSE_ENTRY_PROMPT
+		interaction_label.visible = _is_player_at_house_entry()
 		return
 	interaction_label.visible = false
 	_check_section_progress()
@@ -115,7 +120,10 @@ func _restore_progress() -> void:
 	danger_spawned = bool(data.story_flags.get("trio_danger_cleared", false))
 	last_checkpoint = route_points[SECTION_POINT_INDICES[maxi(0, current_section - 1)]] + Vector3(0, 1.2, 0) if current_section > 0 else route_points[0] + Vector3(0, 1.2, 0)
 	if strange_house_found:
-		player.global_position = route_points[-1] + Vector3(0, 1.2, 2)
+		last_checkpoint = _get_house_approach_checkpoint()
+		player.global_position = last_checkpoint
+		data.current_scene = SCENE_PATH
+		data.player_position = last_checkpoint
 		_show_house_arrival_state()
 	else:
 		_set_section(current_section, false)
@@ -184,7 +192,10 @@ func _arrive_at_strange_house() -> void:
 	data.story_flags["strange_house_found"] = true
 	data.story_flags["trio_journey_completed"] = true
 	data.story_flags["trio_journey_section"] = 5
-	data.player_position = route_points[-1] + Vector3(0, 1.2, 2)
+	data.story_flags["trio_journey_checkpoint"] = "strange_house_approach"
+	last_checkpoint = _get_house_approach_checkpoint()
+	data.current_scene = SCENE_PATH
+	data.player_position = last_checkpoint
 	SaveManager.save_checkpoint()
 	party.set_switching_allowed(false)
 	player.set_controls_enabled(false)
@@ -202,13 +213,13 @@ func _arrive_at_strange_house() -> void:
 func _show_house_arrival_state() -> void:
 	section_label.text = "THE STRANGE HOUSE"
 	_set_objective("Investigate the strange house.")
-	interaction_label.text = "Press E to enter the Drum House"
+	interaction_label.text = HOUSE_ENTRY_PROMPT
+	interaction_label.visible = false
 
 func _on_interact() -> void:
 	if not strange_house_found or transition_active:
 		return
-	var door_position := route_points[-1] + Vector3(0, 1, -7)
-	if player.global_position.distance_to(door_position) > 4.0:
+	if not _is_player_at_house_entry():
 		return
 	transition_active = true
 	party.set_switching_allowed(false)
@@ -221,6 +232,13 @@ func _on_interact() -> void:
 	data.player_position = Vector3(0, 1.1, 22)
 	SaveManager.save_checkpoint()
 	SceneManager.transition_to(DRUM_HOUSE_SCENE)
+
+func _is_player_at_house_entry() -> bool:
+	return is_instance_valid(house_entry_zone) and house_entry_zone.overlaps_body(player)
+
+func _get_house_approach_checkpoint() -> Vector3:
+	# This is on the exterior foundation, facing the visible doorway and within a short walk of it.
+	return route_points[-1] + Vector3(0, 1.2, -8.0)
 
 func _on_character_changed(_character_id: String, display_name: String) -> void:
 	_show_feedback("%s takes the lead." % display_name.capitalize())
@@ -381,6 +399,73 @@ func _add_beacon(position: Vector3, crimson: bool) -> void:
 func _build_house_exterior() -> void:
 	var base := route_points[-1] + Vector3(0, 2.5, -10)
 	_add_ground_box("HouseFoundation", Vector3(26, 1, 22), base - Vector3(0, 2.5, 0), Vector3.ZERO, Color(0.12, 0.1, 0.09))
-	for wall_data in [[Vector3(26, 8, 1), Vector3(0, 1.5, -10)], [Vector3(1, 8, 22), Vector3(-13, 1.5, 0)], [Vector3(1, 8, 22), Vector3(13, 1.5, 0)]]:
+	# The front wall is deliberately split around a real, walk-up doorway.
+	for wall_data in [[Vector3(10.25, 8, 1), Vector3(-7.875, 1.5, -10)], [Vector3(10.25, 8, 1), Vector3(7.875, 1.5, -10)], [Vector3(1, 8, 22), Vector3(-13, 1.5, 0)], [Vector3(1, 8, 22), Vector3(13, 1.5, 0)]]:
 		_add_ground_box("HouseWall", wall_data[0] as Vector3, base + (wall_data[1] as Vector3), Vector3.ZERO, Color(0.22, 0.13, 0.1))
 	_add_ground_box("HouseRoof", Vector3(30, 1, 26), base + Vector3(0, 6.5, 0), Vector3(0, 0, deg_to_rad(4)), Color(0.08, 0.07, 0.07))
+	_build_house_entry(base)
+
+func _build_house_entry(base: Vector3) -> void:
+	var entry_root := Node3D.new()
+	entry_root.name = "StrangeHouseEntrance"
+	entry_root.position = base + Vector3(0, 0, -10.7)
+	$EnvironmentGeometry.add_child(entry_root)
+
+	# A simple frame, steps, and lanterns make the interactive doorway visible from the path.
+	_add_house_entry_piece(entry_root, "DoorFrameLeft", Vector3(0.45, 5.8, 0.7), Vector3(-2.75, 2.9, 0), Color(0.3, 0.18, 0.1))
+	_add_house_entry_piece(entry_root, "DoorFrameRight", Vector3(0.45, 5.8, 0.7), Vector3(2.75, 2.9, 0), Color(0.3, 0.18, 0.1))
+	_add_house_entry_piece(entry_root, "DoorLintel", Vector3(5.95, 0.55, 0.75), Vector3(0, 5.55, 0), Color(0.36, 0.22, 0.12))
+	_add_house_entry_piece(entry_root, "DoorThreshold", Vector3(5.8, 0.32, 1.25), Vector3(0, 0.16, 0.75), Color(0.22, 0.15, 0.1))
+	_add_ground_box("HouseEntryLowerStep", Vector3(7.0, 0.45, 2.2), base + Vector3(0, -2.25, -12.9), Vector3.ZERO, Color(0.18, 0.14, 0.1))
+	_add_ground_box("HouseEntryUpperStep", Vector3(6.4, 0.45, 1.5), base + Vector3(0, -1.72, -11.55), Vector3.ZERO, Color(0.22, 0.16, 0.1))
+	_add_house_entry_lantern(entry_root, Vector3(-3.65, 2.8, 0.25))
+	_add_house_entry_lantern(entry_root, Vector3(3.65, 2.8, 0.25))
+
+	house_entry_position = entry_root.global_position
+	house_entry_zone = Area3D.new()
+	house_entry_zone.name = "StrangeHouseEntryZone"
+	house_entry_zone.position = house_entry_position
+	house_entry_zone.collision_layer = 0
+	house_entry_zone.collision_mask = 1
+	var collision := CollisionShape3D.new()
+	collision.name = "CollisionShape3D"
+	var shape := BoxShape3D.new()
+	shape.size = HOUSE_ENTRY_HALF_EXTENTS * 2.0
+	collision.shape = shape
+	house_entry_zone.add_child(collision)
+	$EnvironmentGeometry.add_child(house_entry_zone)
+
+func _add_house_entry_piece(parent: Node3D, label: String, size: Vector3, local_position: Vector3, color: Color) -> void:
+	var visual := MeshInstance3D.new()
+	visual.name = label
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.85
+	mesh.material = material
+	visual.mesh = mesh
+	visual.position = local_position
+	parent.add_child(visual)
+
+func _add_house_entry_lantern(parent: Node3D, local_position: Vector3) -> void:
+	var lantern := MeshInstance3D.new()
+	lantern.name = "EntryLantern"
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(0.5, 0.8, 0.35)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(1.0, 0.48, 0.12)
+	material.emission_enabled = true
+	material.emission = Color(1.0, 0.2, 0.03)
+	material.emission_energy_multiplier = 2.5
+	mesh.material = material
+	lantern.mesh = mesh
+	lantern.position = local_position
+	parent.add_child(lantern)
+	var light := OmniLight3D.new()
+	light.name = "EntryLanternLight"
+	light.light_color = Color(1.0, 0.45, 0.16)
+	light.light_energy = 1.4
+	light.omni_range = 7.0
+	light.position = local_position
+	parent.add_child(light)

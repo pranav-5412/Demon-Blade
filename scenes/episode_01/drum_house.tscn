@@ -9,8 +9,8 @@
 background_mode = 1
 background_color = Color(0.055, 0.032, 0.035, 1)
 ambient_light_source = 3
-ambient_light_color = Color(0.58, 0.35, 0.25, 1)
-ambient_light_energy = 1.35
+ambient_light_color = Color(0.3, 0.36, 0.46, 1)
+ambient_light_energy = 0.9
 fog_enabled = false
 fog_light_color = Color(0.3, 0.16, 0.12, 1)
 fog_density = 0.0035
@@ -23,8 +23,8 @@ environment = SubResource("Environment_house")
 
 [node name="HouseLight" type="DirectionalLight3D" parent="."]
 rotation_degrees = Vector3(-55, -25, 0)
-light_color = Color(1, 0.58, 0.38, 1)
-light_energy = 1.8
+light_color = Color(0.62, 0.72, 0.9, 1)
+light_energy = 0.65
 shadow_enabled = true
 
 [node name="EnvironmentGeometry" type="Node3D" parent="."]
@@ -38,10 +38,14 @@ shadow_enabled = true
 [node name="PuzzleRoom" type="Node3D" parent="."]
 position = Vector3(0, 0, -11.5)
 script = ExtResource("4_room")
+room_visual_name = "RotatingRoomA"
+room_variant = 0
 
 [node name="TrapRoom" type="Node3D" parent="."]
 position = Vector3(0, 0, -58)
 script = ExtResource("4_room")
+room_visual_name = "RotatingRoomB"
+room_variant = 1
 
 [node name="Enemies" type="Node3D" parent="."]
 
@@ -60,7 +64,7 @@ offset_left = 30.0
 offset_top = 25.0
 offset_right = 430.0
 offset_bottom = 155.0
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 18
 text = "TANJIRO\nHealth: 200 / 200\nStamina: 100 / 100\nWAN: 0"
 
 [node name="AreaLabel" type="Label" parent="HUD"]
@@ -69,7 +73,7 @@ offset_top = 28.0
 offset_right = 1365.0
 offset_bottom = 75.0
 theme_override_colors/font_color = Color(0.95, 0.68, 0.3, 1)
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 24
 text = "DRUM HOUSE — ENTRY HALL"
 horizontal_alignment = 1
 
@@ -78,7 +82,7 @@ offset_left = 30.0
 offset_top = 185.0
 offset_right = 760.0
 offset_bottom = 300.0
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 17
 autowrap_mode = 2
 text = "OBJECTIVE\nInvestigate the strange house."
 
@@ -88,17 +92,18 @@ offset_top = 325.0
 offset_right = 780.0
 offset_bottom = 410.0
 theme_override_colors/font_color = Color(0.2, 0.78, 1, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 16
 text = "BREATH: 100 / 100\n1–7 Water Forms • Ctrl Dodge • Q Guard • F1/F2/F3 Switch"
 
 [node name="FeedbackLabel" type="Label" parent="HUD"]
 offset_left = 420.0
 offset_top = 130.0
-offset_right = 1500.0
-offset_bottom = 180.0
+offset_right = 1240.0
+offset_bottom = 190.0
 theme_override_colors/font_color = Color(0.28, 0.82, 1, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 16
 horizontal_alignment = 1
+autowrap_mode = 2
 visible = false
 
 [node name="DialogueLabel" type="Label" parent="HUD"]
