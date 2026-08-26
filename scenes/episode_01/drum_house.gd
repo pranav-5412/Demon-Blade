@@ -516,7 +516,10 @@ func _build_house_dressing() -> void:
 	_add_solid_box($EnvironmentGeometry, "FrontFacadeLintel", Vector3(6.8, 1.1, 0.8), Vector3(0, 5.25, 28.8), Color(0.22, 0.09, 0.055))
 	_add_visual_box($EnvironmentGeometry, "Roof", Vector3(22.0, 0.8, 25.0), Vector3(0, 6.35, 18.0), Color(0.07, 0.035, 0.03), Vector3(0, 0, deg_to_rad(-2.0)))
 	_add_visual_box($EnvironmentGeometry, "EntryRug", Vector3(5.5, 0.05, 8.0), Vector3(0, 0.04, 18.0), Color(0.42, 0.08, 0.045))
+	_add_visual_box($EnvironmentGeometry, "EntryPath", Vector3(3.2, 0.07, 15.0), Vector3(0, 0.08, 9.5), Color(0.72, 0.24, 0.07))
+	_add_visual_box($EnvironmentGeometry, "EntryThresholdGlow", Vector3(5.4, 0.12, 0.18), Vector3(0, 0.16, 10.0), Color(1.0, 0.5, 0.08))
 	_add_room_label("ENTRY HALL", Vector3(0, 4.6, 25.8), Color(1.0, 0.72, 0.35))
+	_add_room_label("FOLLOW THE LIT PATH", Vector3(0, 3.4, 14.5), Color(1.0, 0.9, 0.45))
 	_add_room_label("ROTATING DRUM CHAMBER", Vector3(0, 5.0, -11.5), Color(1.0, 0.34, 0.18))
 	_add_room_label("SLEEPING WING", Vector3(-16, 4.2, -35), Color(0.65, 0.78, 0.9))
 	_add_room_label("STORAGE WING", Vector3(16, 4.2, -35), Color(0.8, 0.62, 0.35))
@@ -585,6 +588,8 @@ func _add_visual_box(parent: Node, label: String, size: Vector3, position: Vecto
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
 	material.roughness = 0.9
+	material.emission_enabled = true
+	material.emission = color * 0.65
 	mesh.material = material
 	var visual := MeshInstance3D.new()
 	visual.name = label
@@ -661,6 +666,8 @@ func _add_solid_box(parent: Node, label: String, size: Vector3, position: Vector
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
 	material.roughness = 0.92
+	material.emission_enabled = true
+	material.emission = color * 0.55
 	mesh.material = material
 	var visual := MeshInstance3D.new()
 	visual.name = label
