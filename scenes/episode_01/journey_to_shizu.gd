@@ -50,7 +50,7 @@ func _ready() -> void:
 		_set_objective(JOURNEY_OBJECTIVE)
 
 func _process(_delta: float) -> void:
-	status_label.text = "TANJIRO\nHealth: %d\nStamina: %d" % [roundi(player.health), roundi(player.stamina)]
+	status_label.text = "TANJIRO\nHealth: %d / %d\nStamina: %d" % [roundi(player.health), roundi(player.max_health), roundi(player.stamina)]
 	if player.is_on_floor() and player.global_position.y > -0.1:
 		safe_checkpoint_position = player.global_position
 	if player.global_position.y < -8.0:

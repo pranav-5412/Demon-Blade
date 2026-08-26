@@ -181,7 +181,7 @@ mesh = SubResource("Mesh_warning")
 offset_left = 30.0
 offset_top = 28.0
 theme_override_font_sizes/font_size = 22
-text = "TANJIRO\nHealth: 100\nStamina: 100"
+text = "TANJIRO\nHealth: 200 / 200\nStamina: 100"
 [node name="ObjectiveLabel" type="Label" parent="HUD"]
 offset_left = 30.0
 offset_top = 160.0

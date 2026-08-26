@@ -6,8 +6,6 @@ const FINAL_SELECTION_SCENE := "res://scenes/episode_01/final_selection.tscn"
 const POST_SELECTION_SCENE := "res://scenes/episode_01/post_selection_trio.tscn"
 const DEMON_SCRIPT := preload("res://combat/demon_enemy.gd")
 const TOTAL_DAYS := 5
-const HEALTH_REGEN_DELAY := 5.0
-const HEALTH_REGEN_PER_SECOND := 1.5
 
 const DAY_CONFIG := {
 	1: {"kills": 2, "marker": Vector3(0, 1, 0), "objective": "Learn the forest routes and defeat two nearby demons.", "enemies": ["standard", "standard"]},
@@ -59,7 +57,6 @@ var lock_refresh := 0.0
 var active_marker: MeshInstance3D
 var boss_started := false
 var rescue_in_progress := false
-var seconds_since_damage := HEALTH_REGEN_DELAY
 
 func _ready() -> void:
 	GameManager.set_game_state(GameManager.GameState.GAMEPLAY)
@@ -80,8 +77,7 @@ func _ready() -> void:
 		call_deferred("_play_intro")
 
 func _process(delta: float) -> void:
-	_update_health_regeneration(delta)
-	status_label.text = "TANJIRO\nHealth: %d\nStamina: %d\nBreath: %d / %d" % [roundi(player.health), roundi(player.stamina), roundi(breathing.current_breath), roundi(breathing.max_breath)]
+	status_label.text = "TANJIRO\nHealth: %d / %d\nStamina: %d\nBreath: %d / %d" % [roundi(player.health), roundi(player.max_health), roundi(player.stamina), roundi(breathing.current_breath), roundi(breathing.max_breath)]
 	wan_label.text = "WAN  %d" % GameManager.save_data.wan_currency
 	if player.global_position.y < -2.0 and not rescue_in_progress:
 		_rescue_from_void()
@@ -354,16 +350,7 @@ func _on_boss_phase_changed(phase_number: int) -> void:
 	_show_feedback("Phase 2: faster recovery, shockwaves, and a three-hit combo.")
 
 func _on_player_health_changed(current: float, _maximum: float) -> void:
-	if current < player.health:
-		seconds_since_damage = 0.0
 	player.health = current
-
-func _update_health_regeneration(delta: float) -> void:
-	if player_combatant.current_health <= 0.0 or player_combatant.current_health >= player_combatant.max_health:
-		return
-	seconds_since_damage += delta
-	if seconds_since_damage >= HEALTH_REGEN_DELAY:
-		player_combatant.heal(HEALTH_REGEN_PER_SECOND * delta)
 
 func _on_form_activated(form_number: int, ability_name: String) -> void:
 	form_label.text = "ACTIVE FORM: %d — %s\n1–7 Water Forms • Ctrl Dodge • Q Guard" % [form_number, ability_name]

@@ -81,7 +81,7 @@ func _ready() -> void:
 		_configure_stage(training_stage)
 
 func _process(delta: float) -> void:
-	status_label.text = "TANJIRO\nHealth: %d\nStamina: %d" % [roundi(player.health), roundi(player.stamina)]
+	status_label.text = "TANJIRO\nHealth: %d / %d\nStamina: %d" % [roundi(player.health), roundi(player.max_health), roundi(player.stamina)]
 	breathing_label.text = "BREATH: %d / %d" % [roundi(breathing.current_breath), roundi(breathing.max_breath)] if breathing.enabled and training_stage >= 4 else "BREATH: LOCKED"
 	if training_stage in [2, 7] or (training_stage == 6 and current_mastery_form == 5):
 		_update_hazard(delta)

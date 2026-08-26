@@ -10,19 +10,19 @@ signal hook_requested(hook_type: StringName, hook_name: StringName)
 const CHARACTER_ORDER := ["tanjiro", "zenitsu", "inosuke"]
 const PROFILES := {
 	"tanjiro": {
-		"name": "TANJIRO", "max_health": 100.0, "walk_speed": 4.5, "sprint_speed": 7.5,
+		"name": "TANJIRO", "max_health": 200.0, "walk_speed": 4.5, "sprint_speed": 7.5,
 		"color": Color(0.04, 0.34, 0.27), "head_color": Color(0.62, 0.24, 0.18),
 		"light_damage": 12.0, "heavy_damage": 24.0, "light_cost": 8.0, "heavy_cost": 18.0,
 		"light_time": 0.42, "heavy_time": 0.78, "light_hits": 1, "heavy_hits": 1, "dodge_speed": 6.3,
 	},
 	"zenitsu": {
-		"name": "ZENITSU", "max_health": 78.0, "walk_speed": 5.4, "sprint_speed": 9.2,
+		"name": "ZENITSU", "max_health": 200.0, "walk_speed": 5.4, "sprint_speed": 9.2,
 		"color": Color(0.92, 0.58, 0.08), "head_color": Color(0.98, 0.72, 0.3),
 		"light_damage": 11.0, "heavy_damage": 28.0, "light_cost": 6.0, "heavy_cost": 20.0,
 		"light_time": 0.28, "heavy_time": 0.62, "light_hits": 1, "heavy_hits": 1, "dodge_speed": 8.1,
 	},
 	"inosuke": {
-		"name": "INOSUKE", "max_health": 125.0, "walk_speed": 5.0, "sprint_speed": 8.0,
+		"name": "INOSUKE", "max_health": 200.0, "walk_speed": 5.0, "sprint_speed": 8.0,
 		"color": Color(0.18, 0.48, 0.56), "head_color": Color(0.32, 0.36, 0.4),
 		"light_damage": 20.0, "heavy_damage": 36.0, "light_cost": 9.0, "heavy_cost": 22.0,
 		"light_time": 0.46, "heavy_time": 0.72, "light_hits": 2, "heavy_hits": 2, "dodge_speed": 7.2,

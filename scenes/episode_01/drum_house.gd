@@ -507,6 +507,92 @@ func _build_house_geometry() -> void:
 	_add_door_frame(-24.5, 7.0)
 	_add_door_frame(-46.0, 7.0)
 	_add_door_frame(-76.0, 7.0)
+	_build_house_dressing()
+
+func _build_house_dressing() -> void:
+	# A real front facade frames the entrance instead of leaving the arrival side open.
+	_add_solid_box($EnvironmentGeometry, "FrontFacadeLeft", Vector3(6.0, 5.5, 0.8), Vector3(-6.0, 2.75, 28.8), Color(0.16, 0.075, 0.05))
+	_add_solid_box($EnvironmentGeometry, "FrontFacadeRight", Vector3(6.0, 5.5, 0.8), Vector3(6.0, 2.75, 28.8), Color(0.16, 0.075, 0.05))
+	_add_solid_box($EnvironmentGeometry, "FrontFacadeLintel", Vector3(6.8, 1.1, 0.8), Vector3(0, 5.25, 28.8), Color(0.22, 0.09, 0.055))
+	_add_visual_box($EnvironmentGeometry, "Roof", Vector3(22.0, 0.8, 25.0), Vector3(0, 6.35, 18.0), Color(0.07, 0.035, 0.03), Vector3(0, 0, deg_to_rad(-2.0)))
+	_add_visual_box($EnvironmentGeometry, "EntryRug", Vector3(5.5, 0.05, 8.0), Vector3(0, 0.04, 18.0), Color(0.42, 0.08, 0.045))
+	_add_room_label("ENTRY HALL", Vector3(0, 4.6, 25.8), Color(1.0, 0.72, 0.35))
+	_add_room_label("ROTATING DRUM CHAMBER", Vector3(0, 5.0, -11.5), Color(1.0, 0.34, 0.18))
+	_add_room_label("SLEEPING WING", Vector3(-16, 4.2, -35), Color(0.65, 0.78, 0.9))
+	_add_room_label("STORAGE WING", Vector3(16, 4.2, -35), Color(0.8, 0.62, 0.35))
+	_add_room_label("SHIFTING GALLERY", Vector3(0, 4.8, -35), Color(1.0, 0.55, 0.22))
+	_add_room_label("DRUM HEART", Vector3(0, 5.0, -90), Color(1.0, 0.18, 0.1))
+	_add_drum_prop(Vector3(0, 0.85, -11.5))
+	_add_drum_prop(Vector3(0, 0.85, -58.0))
+	_add_drum_prop(Vector3(0, 0.85, -90.0))
+	_add_gallery_props()
+	_add_room_light(Vector3(0, 4.5, 18), Color(1.0, 0.5, 0.22), 2.2, 18.0)
+	_add_room_light(Vector3(0, 4.5, -11.5), Color(1.0, 0.18, 0.08), 3.0, 17.0)
+	_add_room_light(Vector3(-16, 3.8, -35), Color(0.25, 0.45, 1.0), 1.8, 13.0)
+	_add_room_light(Vector3(16, 3.8, -35), Color(1.0, 0.42, 0.12), 1.8, 13.0)
+	_add_room_light(Vector3(0, 4.5, -58), Color(0.85, 0.1, 0.04), 2.6, 15.0)
+	_add_room_light(Vector3(0, 5.0, -90), Color(1.0, 0.08, 0.02), 3.5, 24.0)
+
+func _add_gallery_props() -> void:
+	for z_position in [-39.0, -34.0, -29.0]:
+		_add_visual_box($EnvironmentGeometry, "GalleryBeam", Vector3(1.0, 3.8, 1.0), Vector3(-7.0, 1.9, z_position), Color(0.11, 0.05, 0.035))
+		_add_visual_box($EnvironmentGeometry, "GalleryBeam", Vector3(1.0, 3.8, 1.0), Vector3(7.0, 1.9, z_position), Color(0.11, 0.05, 0.035))
+	for side in [-1.0, 1.0]:
+		for index in 3:
+			_add_visual_box($EnvironmentGeometry, "StorageCrate", Vector3(1.6, 1.1, 1.4), Vector3(side * (15.5 + index * 1.8), 0.55, -38.0 + index * 2.5), Color(0.36, 0.2, 0.08))
+	_add_visual_box($EnvironmentGeometry, "SleepingMat", Vector3(4.0, 0.1, 1.7), Vector3(-16, 0.08, -35), Color(0.18, 0.34, 0.48))
+	_add_visual_box($EnvironmentGeometry, "SleepingMat", Vector3(4.0, 0.1, 1.7), Vector3(-16, 0.08, -38), Color(0.18, 0.34, 0.48))
+
+func _add_drum_prop(position: Vector3) -> void:
+	var drum := MeshInstance3D.new()
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = 0.95
+	mesh.bottom_radius = 0.95
+	mesh.height = 0.7
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.38, 0.035, 0.018)
+	material.emission_enabled = true
+	material.emission = Color(0.22, 0.008, 0.002)
+	mesh.material = material
+	drum.mesh = mesh
+	drum.position = position
+	drum.rotation_degrees.x = 90.0
+	$EnvironmentGeometry.add_child(drum)
+	_add_visual_box($EnvironmentGeometry, "DrumStand", Vector3(2.3, 0.18, 1.1), position + Vector3(0, -0.5, 0), Color(0.12, 0.045, 0.025))
+
+func _add_room_label(text_value: String, position: Vector3, color: Color) -> void:
+	var label := Label3D.new()
+	label.text = text_value
+	label.position = position
+	label.font_size = 32
+	label.outline_size = 8
+	label.modulate = color
+	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	$EnvironmentGeometry.add_child(label)
+
+func _add_room_light(position: Vector3, color: Color, energy: float, range_value: float) -> void:
+	var light := OmniLight3D.new()
+	light.position = position
+	light.light_color = color
+	light.light_energy = energy
+	light.omni_range = range_value
+	light.shadow_enabled = true
+	$EnvironmentGeometry.add_child(light)
+
+func _add_visual_box(parent: Node, label: String, size: Vector3, position: Vector3, color: Color, rotation: Vector3 = Vector3.ZERO) -> MeshInstance3D:
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.roughness = 0.9
+	mesh.material = material
+	var visual := MeshInstance3D.new()
+	visual.name = label
+	visual.mesh = mesh
+	visual.position = position
+	visual.rotation = rotation
+	parent.add_child(visual)
+	return visual
 
 func _build_boss_arena_states() -> void:
 	var layouts := [

@@ -127,7 +127,7 @@ offset_left = 36.0
 offset_top = 36.0
 theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
 theme_override_font_sizes/font_size = 24
-text = "TANJIRO\nHealth: 100\nStamina: 100"
+text = "TANJIRO\nHealth: 200 / 200\nStamina: 100"
 [node name="ObjectiveLabel" type="Label" parent="HUD"]
 offset_left = 36.0
 offset_top = 190.0

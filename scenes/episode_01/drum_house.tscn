@@ -61,7 +61,7 @@ offset_top = 25.0
 offset_right = 430.0
 offset_bottom = 155.0
 theme_override_font_sizes/font_size = 21
-text = "TANJIRO\nHealth: 100 / 100\nStamina: 100 / 100\nWAN: 0"
+text = "TANJIRO\nHealth: 200 / 200\nStamina: 100 / 100\nWAN: 0"
 
 [node name="AreaLabel" type="Label" parent="HUD"]
 offset_left = 555.0

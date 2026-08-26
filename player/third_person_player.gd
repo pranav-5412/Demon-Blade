@@ -13,8 +13,10 @@ signal interact_pressed
 @export var min_pitch_degrees: float = -55.0
 @export var max_pitch_degrees: float = 35.0
 
-@export var max_health: float = 100.0
-@export var health: float = 100.0
+@export var max_health: float = 200.0
+@export var health: float = 200.0
+@export var health_regeneration_per_second: float = 1.5
+@export var health_regeneration_delay: float = 5.0
 @export var max_stamina: float = 100.0
 @export var stamina: float = 100.0
 @export var stamina_drain_per_second: float = 18.0
@@ -23,14 +25,17 @@ signal interact_pressed
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var spring_arm: SpringArm3D = $CameraPivot/SpringArm3D
 @onready var visual: Node3D = $Visual
+@onready var health_combatant: Combatant = get_node_or_null("CombatController/Combatant") as Combatant
 
 var gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 var controls_enabled: bool = true
 var carrying_companion: bool = false
+var seconds_since_health_damage := 0.0
 
 func _ready() -> void:
 	spring_arm.spring_length = camera_distance
 	_restore_saved_position()
+	_configure_health_system()
 	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -54,8 +59,33 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	_update_vertical_velocity(delta)
 	_update_horizontal_velocity(delta)
+	_update_health_regeneration(delta)
 	_update_save_data()
 	move_and_slide()
+
+func _configure_health_system() -> void:
+	if not is_instance_valid(health_combatant):
+		return
+	health_combatant.max_health = max_health
+	health_combatant.current_health = clampf(health, 0.0, max_health)
+	if not health_combatant.health_changed.is_connected(_on_health_changed):
+		health_combatant.health_changed.connect(_on_health_changed)
+	if not health_combatant.damaged.is_connected(_on_health_damaged):
+		health_combatant.damaged.connect(_on_health_damaged)
+
+func _update_health_regeneration(delta: float) -> void:
+	if not is_instance_valid(health_combatant) or health_combatant.current_health <= 0.0 or health_combatant.current_health >= health_combatant.max_health:
+		return
+	seconds_since_health_damage += delta
+	if seconds_since_health_damage >= health_regeneration_delay:
+		health_combatant.heal(health_regeneration_per_second * delta)
+
+func _on_health_damaged(_amount: float, _was_guarded: bool) -> void:
+	seconds_since_health_damage = 0.0
+
+func _on_health_changed(current: float, maximum: float) -> void:
+	max_health = maximum
+	health = current
 
 func _update_vertical_velocity(delta: float) -> void:
 	if not is_on_floor():

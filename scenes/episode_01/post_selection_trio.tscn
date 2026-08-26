@@ -283,7 +283,7 @@ offset_top = 24.0
 offset_right = 360.0
 offset_bottom = 140.0
 theme_override_font_sizes/font_size = 21
-text = "TANJIRO\nHealth: 100 / 100\nStamina: 100 / 100"
+text = "TANJIRO\nHealth: 200 / 200\nStamina: 100 / 100"
 
 [node name="ObjectiveLabel" type="Label" parent="HUD"]
 offset_left = 28.0

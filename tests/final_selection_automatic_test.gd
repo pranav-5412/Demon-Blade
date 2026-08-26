@@ -33,14 +33,16 @@ func _run() -> void:
 	_check(scene.active_enemies.size() == 2, "Day 1 controlled spawn count")
 	_check(scene.active_enemies.size() <= 6, "Active enemy cap is respected")
 	_check(scene.get_node("EnvironmentGeometry").get_child_count() >= 20, "Multi-region terrain builds")
+	_check(is_equal_approx(scene.player.max_health, 200.0) and is_equal_approx(scene.player_combatant.max_health, 200.0), "Player maximum health is 200")
 	for frame in 45:
 		await get_tree().physics_frame
 	_check(scene.get_node("Player").is_on_floor() and scene.get_node("Player").global_position.y > 0.5, "Player remains supported at the Day 1 spawn")
-	scene.player_combatant.current_health = 50.0
-	scene.player.health = 50.0
-	scene.seconds_since_damage = scene.HEALTH_REGEN_DELAY
-	scene._update_health_regeneration(1.0)
-	_check(scene.player.health > 50.0 and scene.player.health < scene.player.max_health, "Health regenerates slowly after the damage delay")
+	scene.player_combatant.restore_full_health()
+	scene.player_combatant.receive_damage(150.0, false)
+	scene.player._update_health_regeneration(4.0)
+	_check(is_equal_approx(scene.player.health, 50.0), "Health regeneration waits after recent damage")
+	scene.player._update_health_regeneration(1.0)
+	_check(is_equal_approx(scene.player.health, 51.5), "Health regenerates slowly at 1.5 HP per second after the delay")
 	scene.player_combatant.restore_full_health()
 	var valid_position := GameManager.save_data.player_position
 	GameManager.save_data.player_position = Vector3(500, 10, 500)

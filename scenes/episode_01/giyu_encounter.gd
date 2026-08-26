@@ -51,7 +51,7 @@ func _ready() -> void:
 	_apply_loaded_state()
 
 func _process(_delta: float) -> void:
-	health_label.text = "Health: %d" % roundi(player_combatant.current_health)
+	health_label.text = "Health: %d / %d" % [roundi(player_combatant.current_health), roundi(player_combatant.max_health)]
 	stamina_label.text = "Stamina: %d" % roundi(player.stamina)
 	lock_on_label.visible = started and player_combat.is_locked_on and phase < TutorialPhase.SPECIAL
 	if phase == TutorialPhase.MOVEMENT and player.global_position.distance_to(movement_origin) >= 1.4:

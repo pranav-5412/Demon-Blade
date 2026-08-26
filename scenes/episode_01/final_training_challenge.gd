@@ -63,7 +63,7 @@ func _ready() -> void:
 	set_process(true)
 
 func _process(_delta: float) -> void:
-	status_label.text = "TANJIRO\nHealth: %d\nStamina: %d" % [roundi(player.health), roundi(player.stamina)]
+	status_label.text = "TANJIRO\nHealth: %d / %d\nStamina: %d" % [roundi(player.health), roundi(player.max_health), roundi(player.stamina)]
 	breathing_label.text = "BREATH: %d / %d" % [roundi(breathing.current_breath), roundi(breathing.max_breath)]
 	if phase == Phase.APPROACH and not sequence_busy and approach_area.overlaps_body(player):
 		_run_failed_attempt()

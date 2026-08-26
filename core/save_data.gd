@@ -8,7 +8,7 @@ var episode: int = 1
 var chapter: int = 0
 var current_scene: String = ""
 var player_position: Vector3 = Vector3.ZERO
-var player_health: float = 100.0
+var player_health: float = 200.0
 var player_stamina: float = 100.0
 var wan_currency: int = 0
 var current_playable_character: String = ""
@@ -31,7 +31,7 @@ static func from_dictionary(value: Dictionary) -> SaveData:
 	var position: Variant = value.get("player_position", {})
 	if position is Dictionary:
 		data.player_position = Vector3(float(position.get("x", 0.0)), float(position.get("y", 0.0)), float(position.get("z", 0.0)))
-	data.player_health = float(value.get("player_health", 100.0))
+	data.player_health = float(value.get("player_health", 200.0))
 	data.player_stamina = float(value.get("player_stamina", 100.0))
 	data.wan_currency = int(value.get("wan_currency", 0))
 	data.current_playable_character = str(value.get("current_playable_character", ""))
