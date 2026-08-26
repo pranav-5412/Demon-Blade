@@ -15,11 +15,12 @@ var current_playable_character: String = ""
 var unlocked_abilities: Array[String] = []
 var story_flags: Dictionary = {}
 var completed_objectives: Array[String] = []
+var sword_material_selected: bool = false
 var sword_material: String = ""
 var upgrade_levels: Dictionary = {}
 
 func to_dictionary() -> Dictionary:
-	return {"version": version, "episode": episode, "chapter": chapter, "current_scene": current_scene, "player_position": {"x": player_position.x, "y": player_position.y, "z": player_position.z}, "player_health": player_health, "player_stamina": player_stamina, "wan_currency": wan_currency, "current_playable_character": current_playable_character, "unlocked_abilities": unlocked_abilities, "story_flags": story_flags, "completed_objectives": completed_objectives, "sword_material": sword_material, "upgrade_levels": upgrade_levels}
+	return {"version": version, "episode": episode, "chapter": chapter, "current_scene": current_scene, "player_position": {"x": player_position.x, "y": player_position.y, "z": player_position.z}, "player_health": player_health, "player_stamina": player_stamina, "wan_currency": wan_currency, "current_playable_character": current_playable_character, "unlocked_abilities": unlocked_abilities, "story_flags": story_flags, "completed_objectives": completed_objectives, "sword_material_selected": sword_material_selected, "sword_material": sword_material, "upgrade_levels": upgrade_levels}
 
 static func from_dictionary(value: Dictionary) -> SaveData:
 	var data := SaveData.new()
@@ -38,5 +39,6 @@ static func from_dictionary(value: Dictionary) -> SaveData:
 	data.story_flags = value.get("story_flags", {})
 	data.completed_objectives.assign(value.get("completed_objectives", []))
 	data.sword_material = str(value.get("sword_material", ""))
+	data.sword_material_selected = bool(value.get("sword_material_selected", not data.sword_material.is_empty()))
 	data.upgrade_levels = value.get("upgrade_levels", {})
 	return data

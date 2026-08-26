@@ -3,6 +3,7 @@ extends Node3D
 signal sound_hook_requested(hook_name: StringName)
 
 const FINAL_SELECTION_SCENE := "res://scenes/episode_01/final_selection.tscn"
+const POST_SELECTION_SCENE := "res://scenes/episode_01/post_selection_trio.tscn"
 const DEMON_SCRIPT := preload("res://combat/demon_enemy.gd")
 const TOTAL_DAYS := 5
 const HEALTH_REGEN_DELAY := 5.0
@@ -281,10 +282,7 @@ func _complete_final_selection() -> void:
 	objective_label.text = "OBJECTIVE\nChoose your sword material."
 	await get_tree().create_timer(2.4).timeout
 	title_label.visible = false
-	feedback_label.text = "Seven days survived. Sword material selection has not begun."
-	feedback_label.visible = true
-	player.set_controls_enabled(true)
-	day_transitioning = false
+	_continue_to_post_selection()
 
 func _show_completed_state() -> void:
 	current_day = TOTAL_DAYS
@@ -295,6 +293,15 @@ func _show_completed_state() -> void:
 	boss_panel.visible = false
 	player.global_position = DAY_CHECKPOINTS[TOTAL_DAYS]
 	combat.set_combat_enabled(false)
+	call_deferred("_continue_to_post_selection")
+
+func _continue_to_post_selection() -> void:
+	if SceneManager.is_transitioning:
+		return
+	GameManager.save_data.current_scene = POST_SELECTION_SCENE
+	GameManager.save_data.player_position = Vector3(0, 1.0, 10)
+	SaveManager.save_checkpoint()
+	SceneManager.transition_to(POST_SELECTION_SCENE)
 
 func _update_objective() -> void:
 	var config: Dictionary = DAY_CONFIG[current_day]

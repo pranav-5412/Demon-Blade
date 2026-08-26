@@ -1,0 +1,417 @@
+[gd_scene load_steps=28 format=3]
+
+[ext_resource type="Script" path="res://scenes/episode_01/post_selection_trio.gd" id="1_scene"]
+[ext_resource type="Script" path="res://player/third_person_player.gd" id="2_player"]
+[ext_resource type="Script" path="res://combat/player_combat_controller.gd" id="3_combat"]
+[ext_resource type="Script" path="res://combat/combatant.gd" id="4_combatant"]
+[ext_resource type="Script" path="res://combat/combat_hitbox.gd" id="5_hitbox"]
+[ext_resource type="Script" path="res://combat/combat_hurtbox.gd" id="6_hurtbox"]
+[ext_resource type="Script" path="res://combat/breathing_controller.gd" id="7_breathing"]
+[ext_resource type="Script" path="res://combat/water_breathing_controller.gd" id="8_water"]
+[ext_resource type="Script" path="res://systems/party_character_controller.gd" id="9_party"]
+[ext_resource type="PackedScene" path="res://combat/training_dummy.tscn" id="10_dummy"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_01_dash_slash.tres" id="11_f1"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_02_spinning_defense.tres" id="12_f2"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_03_flowing_combo.tres" id="13_f3"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_04_wave_arc.tres" id="14_f4"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_05_calm_counter.tres" id="15_f5"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_06_rapid_flow.tres" id="16_f6"]
+[ext_resource type="Resource" path="res://combat/water_forms/form_07_precision_thrust.tres" id="17_f7"]
+
+[sub_resource type="Environment" id="Environment_post"]
+background_mode = 1
+background_color = Color(0.18, 0.28, 0.34, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.55, 0.64, 0.7, 1)
+ambient_light_energy = 0.75
+fog_enabled = true
+fog_light_color = Color(0.48, 0.58, 0.62, 1)
+fog_density = 0.004
+
+[sub_resource type="BoxMesh" id="GroundMesh"]
+size = Vector3(38, 1, 44)
+
+[sub_resource type="BoxShape3D" id="GroundShape"]
+size = Vector3(38, 1, 44)
+
+[sub_resource type="CapsuleShape3D" id="PlayerShape"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="PlayerMesh"]
+radius = 0.35
+height = 1.25
+
+[sub_resource type="SphereMesh" id="HeadMesh"]
+radius = 0.3
+height = 0.6
+
+[sub_resource type="BoxMesh" id="SwordMesh"]
+size = Vector3(0.08, 1.55, 0.11)
+
+[sub_resource type="SphereShape3D" id="HitShape"]
+radius = 0.95
+
+[sub_resource type="CapsuleShape3D" id="HurtShape"]
+radius = 0.42
+height = 1.9
+
+[sub_resource type="BoxShape3D" id="FormShape"]
+size = Vector3(1.4, 1.5, 1.8)
+
+[sub_resource type="CylinderMesh" id="AltarMesh"]
+top_radius = 1.0
+bottom_radius = 1.2
+height = 1.0
+
+[sub_resource type="StandardMaterial3D" id="AltarGlowMaterial"]
+albedo_color = Color(0.15, 0.72, 0.92, 1)
+emission_enabled = true
+emission = Color(0.04, 0.42, 0.72, 1)
+
+[sub_resource type="SphereMesh" id="AltarGlowMesh"]
+material = SubResource("AltarGlowMaterial")
+radius = 0.28
+height = 0.56
+
+[sub_resource type="CapsuleMesh" id="NpcBodyMesh"]
+radius = 0.38
+height = 1.35
+
+[sub_resource type="SphereMesh" id="NpcHeadMesh"]
+radius = 0.31
+height = 0.62
+
+[sub_resource type="StandardMaterial3D" id="ZenitsuBodyMaterial"]
+albedo_color = Color(0.92, 0.58, 0.08, 1)
+
+[sub_resource type="StandardMaterial3D" id="ZenitsuHeadMaterial"]
+albedo_color = Color(0.98, 0.72, 0.3, 1)
+
+[sub_resource type="StandardMaterial3D" id="InosukeBodyMaterial"]
+albedo_color = Color(0.18, 0.48, 0.56, 1)
+
+[sub_resource type="StandardMaterial3D" id="InosukeHeadMaterial"]
+albedo_color = Color(0.32, 0.36, 0.4, 1)
+
+[node name="PostSelectionTrio" type="Node3D"]
+script = ExtResource("1_scene")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_post")
+
+[node name="SunLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-48, -30, 0)
+light_color = Color(0.86, 0.91, 1, 1)
+light_energy = 1.3
+shadow_enabled = true
+
+[node name="EnvironmentGeometry" type="Node3D" parent="."]
+
+[node name="Ground" type="MeshInstance3D" parent="EnvironmentGeometry"]
+position = Vector3(0, -0.5, -5)
+mesh = SubResource("GroundMesh")
+
+[node name="GroundBody" type="StaticBody3D" parent="EnvironmentGeometry"]
+position = Vector3(0, -0.5, -5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="EnvironmentGeometry/GroundBody"]
+shape = SubResource("GroundShape")
+
+[node name="MaterialAltar" type="Node3D" parent="."]
+position = Vector3(0, 0.5, 2)
+
+[node name="Base" type="MeshInstance3D" parent="MaterialAltar"]
+mesh = SubResource("AltarMesh")
+
+[node name="Glow" type="MeshInstance3D" parent="MaterialAltar"]
+position = Vector3(0, 1.0, 0)
+mesh = SubResource("AltarGlowMesh")
+
+[node name="Characters" type="Node3D" parent="."]
+
+[node name="ZenitsuNPC" type="Node3D" parent="Characters"]
+position = Vector3(-8, 0, -6)
+
+[node name="Body" type="MeshInstance3D" parent="Characters/ZenitsuNPC"]
+position = Vector3(0, 0.72, 0)
+mesh = SubResource("NpcBodyMesh")
+material_override = SubResource("ZenitsuBodyMaterial")
+
+[node name="Head" type="MeshInstance3D" parent="Characters/ZenitsuNPC"]
+position = Vector3(0, 1.55, 0)
+mesh = SubResource("NpcHeadMesh")
+material_override = SubResource("ZenitsuHeadMaterial")
+
+[node name="InosukeNPC" type="Node3D" parent="Characters"]
+position = Vector3(8, 0, -14)
+
+[node name="Body" type="MeshInstance3D" parent="Characters/InosukeNPC"]
+position = Vector3(0, 0.72, 0)
+mesh = SubResource("NpcBodyMesh")
+material_override = SubResource("InosukeBodyMaterial")
+
+[node name="Head" type="MeshInstance3D" parent="Characters/InosukeNPC"]
+position = Vector3(0, 1.55, 0)
+mesh = SubResource("NpcHeadMesh")
+material_override = SubResource("InosukeHeadMaterial")
+
+[node name="BladeLeft" type="MeshInstance3D" parent="Characters/InosukeNPC"]
+position = Vector3(-0.45, 0.9, 0)
+rotation_degrees = Vector3(0, 0, 18)
+mesh = SubResource("SwordMesh")
+
+[node name="BladeRight" type="MeshInstance3D" parent="Characters/InosukeNPC"]
+position = Vector3(0.45, 0.9, 0)
+rotation_degrees = Vector3(0, 0, -18)
+mesh = SubResource("SwordMesh")
+
+[node name="TrainingDummy" parent="." instance=ExtResource("10_dummy")]
+position = Vector3(0, 0, -10)
+visible = false
+
+[node name="Player" type="CharacterBody3D" parent="."]
+position = Vector3(0, 1.0, 10)
+script = ExtResource("2_player")
+
+[node name="Collision" type="CollisionShape3D" parent="Player"]
+shape = SubResource("PlayerShape")
+
+[node name="Visual" type="Node3D" parent="Player"]
+
+[node name="Body" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0, -0.2, 0)
+mesh = SubResource("PlayerMesh")
+
+[node name="Head" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0, 0.65, 0)
+mesh = SubResource("HeadMesh")
+
+[node name="Sword" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(0.48, 0.35, -0.08)
+rotation_degrees = Vector3(0, 0, -18)
+mesh = SubResource("SwordMesh")
+
+[node name="OffhandSword" type="MeshInstance3D" parent="Player/Visual"]
+position = Vector3(-0.48, 0.35, -0.08)
+rotation_degrees = Vector3(0, 0, 18)
+mesh = SubResource("SwordMesh")
+visible = false
+
+[node name="CameraPivot" type="Node3D" parent="Player"]
+position = Vector3(0, 0.65, 0)
+rotation_degrees = Vector3(-12, 0, 0)
+
+[node name="SpringArm3D" type="SpringArm3D" parent="Player/CameraPivot"]
+spring_length = 5.2
+margin = 0.15
+
+[node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D"]
+current = true
+
+[node name="CombatController" type="Node3D" parent="Player"]
+script = ExtResource("3_combat")
+
+[node name="Combatant" type="Node" parent="Player/CombatController"]
+script = ExtResource("4_combatant")
+
+[node name="Hitbox" type="Area3D" parent="Player/CombatController"]
+position = Vector3(0, 0.45, -1)
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("5_hitbox")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/CombatController/Hitbox"]
+shape = SubResource("HitShape")
+
+[node name="Hurtbox" type="Area3D" parent="Player"]
+position = Vector3(0, 0.1, 0)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("6_hurtbox")
+combatant_path = NodePath("../CombatController/Combatant")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/Hurtbox"]
+shape = SubResource("HurtShape")
+
+[node name="BreathingController" type="Node" parent="Player"]
+script = ExtResource("7_breathing")
+
+[node name="WaterBreathingController" type="Node3D" parent="Player"]
+script = ExtResource("8_water")
+forms = [ExtResource("11_f1"), ExtResource("12_f2"), ExtResource("13_f3"), ExtResource("14_f4"), ExtResource("15_f5"), ExtResource("16_f6"), ExtResource("17_f7")]
+hitbox_path = NodePath("FormHitbox")
+breathing_path = NodePath("../BreathingController")
+combatant_path = NodePath("../CombatController/Combatant")
+
+[node name="FormHitbox" type="Area3D" parent="Player/WaterBreathingController"]
+position = Vector3(0, 0.45, -1.2)
+collision_layer = 0
+collision_mask = 4
+script = ExtResource("5_hitbox")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/WaterBreathingController/FormHitbox"]
+shape = SubResource("FormShape")
+
+[node name="PartyCharacterController" type="Node" parent="Player"]
+script = ExtResource("9_party")
+
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="StatusLabel" type="Label" parent="HUD"]
+offset_left = 28.0
+offset_top = 24.0
+offset_right = 360.0
+offset_bottom = 140.0
+theme_override_font_sizes/font_size = 21
+text = "TANJIRO\nHealth: 100 / 100\nStamina: 100 / 100"
+
+[node name="ObjectiveLabel" type="Label" parent="HUD"]
+offset_left = 28.0
+offset_top = 175.0
+offset_right = 710.0
+offset_bottom = 275.0
+theme_override_font_sizes/font_size = 20
+autowrap_mode = 2
+text = "OBJECTIVE\nChoose your sword material."
+
+[node name="AbilityLabel" type="Label" parent="HUD"]
+offset_left = 28.0
+offset_top = 300.0
+offset_right = 700.0
+offset_bottom = 385.0
+theme_override_colors/font_color = Color(0.18, 0.78, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "WATER BREATHING: 100 / 100"
+
+[node name="FeedbackLabel" type="Label" parent="HUD"]
+offset_left = 430.0
+offset_top = 110.0
+offset_right = 1490.0
+offset_bottom = 160.0
+theme_override_colors/font_color = Color(0.3, 0.86, 1, 1)
+theme_override_font_sizes/font_size = 19
+horizontal_alignment = 1
+visible = false
+
+[node name="InteractionLabel" type="Label" parent="HUD"]
+offset_left = 610.0
+offset_top = 820.0
+offset_right = 1310.0
+offset_bottom = 870.0
+theme_override_font_sizes/font_size = 21
+horizontal_alignment = 1
+visible = false
+
+[node name="DialogueLabel" type="Label" parent="HUD"]
+offset_left = 390.0
+offset_top = 690.0
+offset_right = 1530.0
+offset_bottom = 800.0
+theme_override_colors/font_color = Color(0.96, 0.92, 0.78, 1)
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+autowrap_mode = 2
+visible = false
+
+[node name="TitleLabel" type="Label" parent="HUD"]
+offset_left = 390.0
+offset_top = 320.0
+offset_right = 1530.0
+offset_bottom = 470.0
+theme_override_colors/font_color = Color(0.95, 0.8, 0.25, 1)
+theme_override_font_sizes/font_size = 31
+horizontal_alignment = 1
+vertical_alignment = 1
+visible = false
+
+[node name="TutorialLabel" type="Label" parent="HUD"]
+offset_left = 450.0
+offset_top = 175.0
+offset_right = 1470.0
+offset_bottom = 250.0
+theme_override_colors/font_color = Color(0.84, 0.91, 1, 1)
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+visible = false
+
+[node name="SelectionPanel" type="Panel" parent="HUD"]
+offset_left = 560.0
+offset_top = 240.0
+offset_right = 1360.0
+offset_bottom = 680.0
+visible = false
+
+[node name="Title" type="Label" parent="HUD/SelectionPanel"]
+offset_left = 30.0
+offset_top = 24.0
+offset_right = 770.0
+offset_bottom = 70.0
+theme_override_font_sizes/font_size = 28
+text = "CHOOSE SWORD MATERIAL"
+horizontal_alignment = 1
+
+[node name="MaterialName" type="Label" parent="HUD/SelectionPanel"]
+offset_left = 40.0
+offset_top = 90.0
+offset_right = 760.0
+offset_bottom = 135.0
+theme_override_colors/font_color = Color(0.25, 0.8, 1, 1)
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+
+[node name="MaterialDescription" type="Label" parent="HUD/SelectionPanel"]
+offset_left = 55.0
+offset_top = 155.0
+offset_right = 745.0
+offset_bottom = 205.0
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="MaterialEffect" type="Label" parent="HUD/SelectionPanel"]
+offset_left = 55.0
+offset_top = 220.0
+offset_right = 745.0
+offset_bottom = 275.0
+theme_override_colors/font_color = Color(0.8, 0.92, 0.62, 1)
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ConfirmationLabel" type="Label" parent="HUD/SelectionPanel"]
+offset_left = 55.0
+offset_top = 285.0
+offset_right = 745.0
+offset_bottom = 335.0
+theme_override_font_sizes/font_size = 17
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="PreviousButton" type="Button" parent="HUD/SelectionPanel"]
+offset_left = 40.0
+offset_top = 355.0
+offset_right = 210.0
+offset_bottom = 410.0
+text = "< Previous"
+
+[node name="NextButton" type="Button" parent="HUD/SelectionPanel"]
+offset_left = 590.0
+offset_top = 355.0
+offset_right = 760.0
+offset_bottom = 410.0
+text = "Next >"
+
+[node name="ConfirmButton" type="Button" parent="HUD/SelectionPanel"]
+offset_left = 245.0
+offset_top = 355.0
+offset_right = 385.0
+offset_bottom = 410.0
+text = "Confirm"
+
+[node name="CancelButton" type="Button" parent="HUD/SelectionPanel"]
+offset_left = 415.0
+offset_top = 355.0
+offset_right = 555.0
+offset_bottom = 410.0
+text = "Back"

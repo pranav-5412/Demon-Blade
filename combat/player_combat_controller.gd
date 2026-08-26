@@ -6,9 +6,8 @@ signal dodge_performed
 signal guard_changed(is_guarding: bool)
 signal lock_on_changed(is_locked: bool)
 
-const LIGHT_STAMINA_COST := 8.0
-const HEAVY_STAMINA_COST := 18.0
-const DODGE_STAMINA_COST := 16.0
+const DEFAULT_LIGHT_DAMAGE := 12.0
+const DEFAULT_HEAVY_DAMAGE := 24.0
 
 @onready var player: ThirdPersonPlayer = get_parent()
 @onready var combatant: Combatant = $Combatant
@@ -22,6 +21,18 @@ var lock_target: Node3D
 var is_dodge_moving: bool = false
 var dodge_direction: Vector3
 var dodge_speed: float = 0.0
+var light_damage := DEFAULT_LIGHT_DAMAGE
+var heavy_damage := DEFAULT_HEAVY_DAMAGE
+var light_stamina_cost := 8.0
+var heavy_stamina_cost := 18.0
+var dodge_stamina_cost := 16.0
+var light_attack_time := 0.42
+var heavy_attack_time := 0.78
+var light_active_time := 0.16
+var heavy_active_time := 0.26
+var light_chain_hits := 1
+var heavy_chain_hits := 1
+var damage_multiplier := 1.0
 
 func _ready() -> void:
 	hitbox.source_combatant = combatant
@@ -57,10 +68,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if is_busy or combatant.is_guarding:
 		return
 	if event.is_action_pressed("attack"):
-		_perform_attack("light", 12.0, LIGHT_STAMINA_COST, 0.42, 0.16)
+		_perform_attack("light", light_damage * damage_multiplier, light_stamina_cost, light_attack_time, light_active_time, light_chain_hits)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("heavy_attack"):
-		_perform_attack("heavy", 24.0, HEAVY_STAMINA_COST, 0.78, 0.26)
+		_perform_attack("heavy", heavy_damage * damage_multiplier, heavy_stamina_cost, heavy_attack_time, heavy_active_time, heavy_chain_hits)
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("dodge") or _is_ctrl_pressed(event):
 		_perform_dodge()
@@ -79,7 +90,33 @@ func set_combat_enabled(value: bool) -> void:
 func set_lock_target(target: Node3D) -> void:
 	lock_target = target
 
-func _perform_attack(attack_type: String, damage: float, stamina_cost: float, total_time: float, active_time: float) -> void:
+func configure_profile(profile: Dictionary, material_damage_multiplier: float = 1.0) -> void:
+	light_damage = float(profile.get("light_damage", DEFAULT_LIGHT_DAMAGE))
+	heavy_damage = float(profile.get("heavy_damage", DEFAULT_HEAVY_DAMAGE))
+	light_stamina_cost = float(profile.get("light_cost", 8.0))
+	heavy_stamina_cost = float(profile.get("heavy_cost", 18.0))
+	dodge_stamina_cost = float(profile.get("dodge_cost", 16.0))
+	light_attack_time = float(profile.get("light_time", 0.42))
+	heavy_attack_time = float(profile.get("heavy_time", 0.78))
+	light_active_time = float(profile.get("light_active", 0.16))
+	heavy_active_time = float(profile.get("heavy_active", 0.26))
+	light_chain_hits = maxi(1, int(profile.get("light_hits", 1)))
+	heavy_chain_hits = maxi(1, int(profile.get("heavy_hits", 1)))
+	dodge_speed = float(profile.get("dodge_speed", 6.3))
+	damage_multiplier = material_damage_multiplier
+
+func can_accept_action() -> bool:
+	return enabled and not is_busy and not combatant.is_guarding
+
+func perform_attack(attack_type: String) -> void:
+	if not can_accept_action():
+		return
+	if attack_type == "heavy":
+		_perform_attack("heavy", heavy_damage * damage_multiplier, heavy_stamina_cost, heavy_attack_time, heavy_active_time, heavy_chain_hits)
+	else:
+		_perform_attack("light", light_damage * damage_multiplier, light_stamina_cost, light_attack_time, light_active_time, light_chain_hits)
+
+func _perform_attack(attack_type: String, damage: float, stamina_cost: float, total_time: float, active_time: float, chain_hits: int = 1) -> void:
 	if player.stamina < stamina_cost:
 		return
 	is_busy = true
@@ -90,16 +127,21 @@ func _perform_attack(attack_type: String, damage: float, stamina_cost: float, to
 	var tween := create_tween()
 	tween.tween_property(visual, "rotation", windup_rotation, total_time * 0.35).set_trans(Tween.TRANS_SINE)
 	tween.tween_property(visual, "rotation", original_rotation, total_time * 0.65).set_trans(Tween.TRANS_BACK)
-	await get_tree().create_timer(total_time * 0.28).timeout
-	hitbox.activate(damage, active_time, attack_type == "heavy")
-	await get_tree().create_timer(total_time * 0.72).timeout
+	await get_tree().create_timer(total_time * 0.24).timeout
+	for strike in chain_hits:
+		hitbox.activate(damage / float(chain_hits), active_time, attack_type == "heavy" or chain_hits > 1)
+		if chain_hits > 1:
+			visual.rotation.z = -0.32 if strike % 2 == 0 else 0.32
+			await get_tree().create_timer(total_time * 0.22).timeout
+	visual.rotation.z = 0.0
+	await get_tree().create_timer(total_time * 0.54).timeout
 	is_busy = false
 
 func _perform_dodge() -> void:
-	if player.stamina < DODGE_STAMINA_COST:
+	if player.stamina < dodge_stamina_cost:
 		return
 	is_busy = true
-	player.stamina -= DODGE_STAMINA_COST
+	player.stamina -= dodge_stamina_cost
 	combatant.set_invulnerable(true)
 	dodge_performed.emit()
 	var input_vector := Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
@@ -107,7 +149,8 @@ func _perform_dodge() -> void:
 	if direction.is_zero_approx():
 		direction = player.global_basis.z
 	dodge_direction = direction
-	dodge_speed = 6.3
+	if dodge_speed <= 0.0:
+		dodge_speed = 6.3
 	is_dodge_moving = true
 	player.set_controls_enabled(false)
 	var original_rotation := visual.rotation
