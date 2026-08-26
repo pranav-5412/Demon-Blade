@@ -524,8 +524,15 @@ func _companion_target_position(slot_index: int) -> Vector3:
 	var side := -1.55 if slot_index == 0 else 1.55
 	var offset := player.global_basis.x * side + player.global_basis.z * 1.75
 	var target := player.global_position + offset
-	target.y = player.global_position.y - 1.0
+	target.y = _ground_height_at(target)
 	return target
+
+func _ground_height_at(position: Vector3) -> float:
+	var query := PhysicsRayQueryParameters3D.create(position + Vector3(0.0, 20.0, 0.0), position + Vector3(0.0, -30.0, 0.0))
+	query.exclude = [player.get_rid()]
+	query.collide_with_areas = false
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	return float(hit.get("position", position).y) if not hit.is_empty() else 0.0
 
 func _configure_companion(companion: Node3D, character_id: String) -> void:
 	companion.name = "%sCompanion" % character_id.capitalize()

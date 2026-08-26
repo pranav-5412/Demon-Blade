@@ -191,6 +191,11 @@ func _run() -> void:
 	_check("tanjiro" in scene.companion_ids and "zenitsu" not in scene.companion_ids, "Switch moves the previous Tanjiro into a companion slot")
 	_check(scene.party.switch_to("inosuke"), "Zenitsu to Inosuke switch works")
 	_check("zenitsu" in scene.companion_ids and "inosuke" not in scene.companion_ids, "Switch moves the previous Zenitsu into a companion slot")
+	var companion_ground_y: float = scene.zenitsu_npc.global_position.y
+	scene.player.global_position.y += 4.0
+	scene._update_party_companions(1.0)
+	_check(is_equal_approx(scene.zenitsu_npc.global_position.y, companion_ground_y), "Companions follow terrain instead of copying player jumps")
+	scene.player.global_position.y -= 4.0
 	_check(scene.find_children("*", "CharacterBody3D", true, false).size() == 1 and scene.get_node("Player") == shared_player, "Switching creates no duplicate player body")
 	for frame in 10:
 		await get_tree().physics_frame
