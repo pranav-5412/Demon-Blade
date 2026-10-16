@@ -6,6 +6,7 @@ signal dummy_defeated(dummy: TrainingDummy)
 
 @onready var combatant: Combatant = $Combatant
 @onready var visual: MeshInstance3D = $Visual
+@onready var hurtbox: Area3D = $Hurtbox
 
 func _ready() -> void:
 	combatant.damaged.connect(_on_damaged)
@@ -15,7 +16,7 @@ func reset_dummy(health: float = 100.0) -> void:
 	combatant.max_health = health
 	combatant.restore_full_health()
 	visible = true
-	$Hurtbox.set_deferred("monitorable", true)
+	hurtbox.set_deferred("monitorable", true)
 	visual.scale = Vector3.ONE
 
 func _on_damaged(amount: float, _guarded: bool) -> void:
@@ -25,6 +26,6 @@ func _on_damaged(amount: float, _guarded: bool) -> void:
 	dummy_damaged.emit(self, amount)
 
 func _on_defeated() -> void:
-	$Hurtbox.set_deferred("monitorable", false)
+	hurtbox.set_deferred("monitorable", false)
 	visual.scale = Vector3(1.0, 0.25, 1.0)
 	dummy_defeated.emit(self)

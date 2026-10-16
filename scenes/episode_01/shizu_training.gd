@@ -124,7 +124,7 @@ func _configure_stage(stage: int) -> void:
 			area.monitoring = false
 	for dummy in dummies:
 		dummy.visible = false
-		dummy.get_node("Hurtbox").monitorable = false
+		dummy.hurtbox.monitorable = false
 	hazard_log.visible = stage in [2, 7]
 	$TrainingFeatures/HazardTelegraph.visible = false
 	match stage:
@@ -440,7 +440,7 @@ func _reset_dummies(count: int, health: float, positions: Array) -> void:
 			dummy.reset_dummy(health)
 		else:
 			dummy.visible = false
-			dummy.get_node("Hurtbox").set_deferred("monitorable", false)
+			dummy.hurtbox.set_deferred("monitorable", false)
 
 func _build_dummies() -> void:
 	for index in 5:
