@@ -395,6 +395,15 @@ func _depart_for_final_selection() -> void:
 func _run_final_cut() -> void:
 	if sequence_busy or phase != Phase.RETURN_TO_BOULDER:
 		return
+	_setup_final_cut_state()
+	await _play_final_cinematic()
+	var activated := await _execute_final_strike()
+	if not activated:
+		_handle_final_strike_failure()
+		return
+	await _conclude_final_cut()
+
+func _setup_final_cut_state() -> void:
 	sequence_busy = true
 	phase = Phase.FINAL_CUT
 	interaction_label.visible = false
@@ -403,6 +412,8 @@ func _run_final_cut() -> void:
 	companion_a.stop_trial()
 	companion_b.stop_trial()
 	_set_cinematic_hud(true)
+
+func _play_final_cinematic() -> void:
 	player.velocity = Vector3.ZERO
 	player.global_position = Vector3(0, 1, -14.2)
 	player.look_at($Boulder.global_position + Vector3(0, 1.8, 0), Vector3.UP)
@@ -411,6 +422,8 @@ func _run_final_cut() -> void:
 	var stance := create_tween()
 	stance.tween_property(player.visual, "rotation:z", -0.48, 0.65).set_trans(Tween.TRANS_SINE)
 	await stance.finished
+
+func _execute_final_strike() -> bool:
 	breathing.refill(breathing.max_breath)
 	player.stamina = player.max_stamina
 	water.cooldown_ends[7] = 0.0
@@ -423,7 +436,7 @@ func _run_final_cut() -> void:
 	water.set_enabled(true)
 	sound_hook_requested.emit(&"final_breath_focus")
 	Engine.time_scale = 0.38
-	var activated := await water.activate_form(7)
+	var activated: bool = await water.activate_form(7)
 	Engine.time_scale = 1.0
 	if not activated:
 		breathing.refill(breathing.max_breath)
@@ -431,16 +444,19 @@ func _run_final_cut() -> void:
 		water.cooldown_ends[7] = 0.0
 		water.set_form_unlocked(7, true)
 		activated = await water.activate_form(7)
-	if not activated:
-		phase = Phase.RETURN_TO_BOULDER
-		_set_objective("Cut the boulder.")
-		_set_cinematic_hud(false)
-		_end_cinematic()
-		combat.set_combat_enabled(true)
-		player.set_controls_enabled(true)
-		sequence_busy = false
-		_show_trial_message("The final Water Form did not activate. Return to the boulder and press E to retry.")
-		return
+	return activated
+
+func _handle_final_strike_failure() -> void:
+	phase = Phase.RETURN_TO_BOULDER
+	_set_objective("Cut the boulder.")
+	_set_cinematic_hud(false)
+	_end_cinematic()
+	combat.set_combat_enabled(true)
+	player.set_controls_enabled(true)
+	sequence_busy = false
+	_show_trial_message("The final Water Form did not activate. Return to the boulder and press E to retry.")
+
+func _conclude_final_cut() -> void:
 	await _move_camera(Vector3(-5.8, 3.2, -18.0), Vector3(0, 2.4, -22), 0.38)
 	await get_tree().create_timer(0.28).timeout
 	sound_hook_requested.emit(&"boulder_crack")
