@@ -191,6 +191,22 @@ func _run() -> void:
 	_check("tanjiro" in scene.companion_ids and "zenitsu" not in scene.companion_ids, "Switch moves the previous Tanjiro into a companion slot")
 	_check(scene.party.switch_to("inosuke"), "Zenitsu to Inosuke switch works")
 	_check("zenitsu" in scene.companion_ids and "inosuke" not in scene.companion_ids, "Switch moves the previous Zenitsu into a companion slot")
+	scene.party.switch_to("tanjiro")
+	scene.party.cycle_character()
+	_check(scene.party.current_character == "zenitsu", "Cycling advances from Tanjiro to Zenitsu")
+	scene.party.cycle_character()
+	_check(scene.party.current_character == "inosuke", "Cycling advances from Zenitsu to Inosuke")
+	scene.party.cycle_character()
+	_check(scene.party.current_character == "tanjiro", "Cycling loops from Inosuke back to Tanjiro")
+	GameManager.save_data.story_flags["zenitsu_unlocked"] = false
+	scene.party.cycle_character()
+	_check(scene.party.current_character == "inosuke", "Cycling from Tanjiro skips locked Zenitsu directly to Inosuke")
+	GameManager.save_data.story_flags["inosuke_unlocked"] = false
+	scene.party.cycle_character()
+	_check(scene.party.current_character == "tanjiro", "Cycling from Inosuke loops back to Tanjiro")
+	_check(not scene.party.cycle_character() and scene.party.current_character == "tanjiro", "Cycling with no other unlocked characters remains on Tanjiro")
+	GameManager.save_data.story_flags["zenitsu_unlocked"] = true
+	GameManager.save_data.story_flags["inosuke_unlocked"] = true
 	var companion_ground_y: float = scene.zenitsu_npc.global_position.y
 	scene.player.global_position.y += 4.0
 	scene._update_party_companions(1.0)
