@@ -77,6 +77,8 @@ func _run() -> void:
 	GameManager.save_data.sword_material = "dense_iron"
 	scene.party.apply_character("tanjiro", false)
 	_check(bool(GameManager.save_data.story_flags.get("sword_material_selected", false)), "Material selection flag is stored")
+	scene.party.apply_character("non_existent_character", false)
+	_check(scene.party.current_character == "tanjiro", "Invalid character ID falls back to tanjiro")
 	_check(scene.state == scene.ProgressState.APPROACH_ZENITSU and not scene.selection_panel.visible, "Story proceeds after selection")
 	var chosen_before := GameManager.save_data.sword_material
 	scene._confirm_material()
