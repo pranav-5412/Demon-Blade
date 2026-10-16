@@ -134,10 +134,23 @@ func _face_player() -> void:
 		look_at(target, Vector3.UP)
 
 func _build_placeholder() -> void:
+	_build_visuals()
+	_build_combat_components()
+	_build_rings()
+
+func _build_visuals() -> void:
 	visual = Node3D.new()
 	visual.name = "Visual"
 	add_child(visual)
 	var is_speed := trial_kind == "speed" or name.contains("B")
+
+	_create_body(is_speed)
+	_create_mask(is_speed)
+	if is_speed:
+		_create_speed_marks()
+	_create_sword(is_speed)
+
+func _create_body(is_speed: bool) -> void:
 	var body_material := StandardMaterial3D.new()
 	body_material.albedo_color = Color(0.24, 0.12, 0.42, 1.0) if is_speed else Color(0.14, 0.28, 0.38, 1.0)
 	body_material.emission_enabled = true
@@ -152,6 +165,8 @@ func _build_placeholder() -> void:
 	body.mesh = body_mesh
 	body.position.y = 0.72
 	visual.add_child(body)
+
+func _create_mask(is_speed: bool) -> void:
 	var mask_material := StandardMaterial3D.new()
 	mask_material.albedo_color = Color(0.82, 0.9, 0.96, 1.0) if is_speed else Color(0.72, 0.8, 0.84, 1.0)
 	mask_material.emission_enabled = true
@@ -167,20 +182,23 @@ func _build_placeholder() -> void:
 	mask.position = Vector3(0.0, 1.42 if is_speed else 1.62, -0.19)
 	mask.scale = Vector3(1.0, 1.08, 0.42)
 	visual.add_child(mask)
-	if is_speed:
-		for side in [-1.0, 1.0]:
-			var mark_mesh := BoxMesh.new()
-			mark_mesh.size = Vector3(0.055, 0.18, 0.025)
-			var mark_material := StandardMaterial3D.new()
-			mark_material.albedo_color = Color(0.05, 0.7, 0.95, 1.0)
-			mark_material.emission_enabled = true
-			mark_material.emission = Color(0.0, 0.45, 0.9, 1.0)
-			mark_mesh.material = mark_material
-			var mark := MeshInstance3D.new()
-			mark.mesh = mark_mesh
-			mark.position = Vector3(0.1 * side, 1.42, -0.31)
-			mark.rotation_degrees.z = 18.0 * side
-			visual.add_child(mark)
+
+func _create_speed_marks() -> void:
+	for side in [-1.0, 1.0]:
+		var mark_mesh := BoxMesh.new()
+		mark_mesh.size = Vector3(0.055, 0.18, 0.025)
+		var mark_material := StandardMaterial3D.new()
+		mark_material.albedo_color = Color(0.05, 0.7, 0.95, 1.0)
+		mark_material.emission_enabled = true
+		mark_material.emission = Color(0.0, 0.45, 0.9, 1.0)
+		mark_mesh.material = mark_material
+		var mark := MeshInstance3D.new()
+		mark.mesh = mark_mesh
+		mark.position = Vector3(0.1 * side, 1.42, -0.31)
+		mark.rotation_degrees.z = 18.0 * side
+		visual.add_child(mark)
+
+func _create_sword(is_speed: bool) -> void:
 	var sword_mesh := BoxMesh.new()
 	sword_mesh.size = Vector3(0.08, 1.45 if is_speed else 1.7, 0.12)
 	var sword_material := StandardMaterial3D.new()
@@ -193,6 +211,8 @@ func _build_placeholder() -> void:
 	sword.position = Vector3(0.48, 0.95, -0.15)
 	sword.rotation_degrees.z = -18.0
 	visual.add_child(sword)
+
+func _build_combat_components() -> void:
 	combatant = Combatant.new()
 	combatant.name = "Combatant"
 	combatant.max_health = 999.0
@@ -210,6 +230,8 @@ func _build_placeholder() -> void:
 	hurtbox.position.y = 0.9
 	hurtbox.add_child(hurt_shape_node)
 	add_child(hurtbox)
+
+func _build_rings() -> void:
 	var ring_material := StandardMaterial3D.new()
 	ring_material.albedo_color = Color(0.95, 0.18, 0.08, 0.55)
 	ring_material.emission_enabled = true
