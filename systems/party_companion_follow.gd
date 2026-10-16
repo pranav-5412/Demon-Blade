@@ -28,10 +28,11 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not follow_enabled:
 		return
+	var catch_up_distance_squared := catch_up_distance * catch_up_distance
 	for index in slots.size():
 		var slot := slots[index]
 		var target := _target_position(index)
-		if slot.global_position.distance_to(target) > catch_up_distance:
+		if slot.global_position.distance_squared_to(target) > catch_up_distance_squared:
 			slot.global_position = target
 		else:
 			slot.global_position = slot.global_position.lerp(target, minf(delta * 5.5, 1.0))
