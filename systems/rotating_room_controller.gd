@@ -84,30 +84,40 @@ func _build_room() -> void:
 	add_child(visual_root)
 	visual_root.set_meta("furnished_rotating_room", true)
 	visual_root.set_meta("dimensions", Vector3(10, 4.5, 10))
-	_add_visual_box(visual_root, "WoodenFloor", Vector3(10, 0.38, 10), Vector3(0, -0.19, 0), Color(0.38, 0.27, 0.17))
-	_add_visual_box(visual_root, "PaperCeiling", Vector3(10, 0.28, 10), Vector3(0, 4.45, 0), Color(0.35, 0.3, 0.24))
-	_add_visual_box(visual_root, "PanelWallLeft", Vector3(0.32, 4.5, 10), Vector3(-5, 2.25, 0), Color(0.5, 0.42, 0.31))
-	_add_visual_box(visual_root, "PanelWallRight", Vector3(0.32, 4.5, 10), Vector3(5, 2.25, 0), Color(0.5, 0.42, 0.31))
-	_add_door_wall(visual_root, "EntranceWall", 5.0)
-	_add_door_wall(visual_root, "ExitWall", -5.0)
+	_build_architecture(visual_root)
+	_build_props(visual_root)
+	_build_state_geometry()
+	_build_exit_bridge()
+
+func _build_architecture(parent: Node) -> void:
+	_add_visual_box(parent, "WoodenFloor", Vector3(10, 0.38, 10), Vector3(0, -0.19, 0), Color(0.38, 0.27, 0.17))
+	_add_visual_box(parent, "PaperCeiling", Vector3(10, 0.28, 10), Vector3(0, 4.45, 0), Color(0.35, 0.3, 0.24))
+	_add_visual_box(parent, "PanelWallLeft", Vector3(0.32, 4.5, 10), Vector3(-5, 2.25, 0), Color(0.5, 0.42, 0.31))
+	_add_visual_box(parent, "PanelWallRight", Vector3(0.32, 4.5, 10), Vector3(5, 2.25, 0), Color(0.5, 0.42, 0.31))
+	_add_door_wall(parent, "EntranceWall", 5.0)
+	_add_door_wall(parent, "ExitWall", -5.0)
 	for x_position in [-4.75, 4.75]:
 		for z_position in [-4.75, 4.75]:
-			_add_visual_box(visual_root, "CornerTimber", Vector3(0.38, 4.5, 0.38), Vector3(x_position, 2.25, z_position), Color(0.2, 0.075, 0.035))
+			_add_visual_box(parent, "CornerTimber", Vector3(0.38, 4.5, 0.38), Vector3(x_position, 2.25, z_position), Color(0.2, 0.075, 0.035))
 	for beam_z in [-3.2, 0.0, 3.2]:
-		_add_visual_box(visual_root, "CeilingBeam", Vector3(9.8, 0.32, 0.34), Vector3(0, 4.2, beam_z), Color(0.21, 0.075, 0.035))
+		_add_visual_box(parent, "CeilingBeam", Vector3(9.8, 0.32, 0.34), Vector3(0, 4.2, beam_z), Color(0.21, 0.075, 0.035))
+
+func _build_props(parent: Node) -> void:
 	if room_variant == 0:
 		for mat_position in [Vector3(-2.2, 0.03, -1.4), Vector3(0.4, 0.03, -1.4), Vector3(-2.2, 0.03, 1.0), Vector3(0.4, 0.03, 1.0)]:
-			_add_visual_box(visual_root, "TatamiMat", Vector3(2.25, 0.08, 1.85), mat_position, Color(0.52, 0.5, 0.29))
-		_add_visual_box(visual_root, "WallShelf", Vector3(2.8, 0.2, 0.65), Vector3(-3.9, 2.2, 0), Color(0.28, 0.12, 0.055))
-		_add_visual_box(visual_root, "BrokenCabinet", Vector3(1.1, 1.7, 0.7), Vector3(3.8, 0.85, 2.5), Color(0.3, 0.14, 0.06), Vector3(0.08, 0.18, 0.12))
+			_add_visual_box(parent, "TatamiMat", Vector3(2.25, 0.08, 1.85), mat_position, Color(0.52, 0.5, 0.29))
+		_add_visual_box(parent, "WallShelf", Vector3(2.8, 0.2, 0.65), Vector3(-3.9, 2.2, 0), Color(0.28, 0.12, 0.055))
+		_add_visual_box(parent, "BrokenCabinet", Vector3(1.1, 1.7, 0.7), Vector3(3.8, 0.85, 2.5), Color(0.3, 0.14, 0.06), Vector3(0.08, 0.18, 0.12))
 	else:
-		_add_visual_box(visual_root, "TiltedBookcase", Vector3(1.3, 3.2, 0.65), Vector3(-3.6, 1.6, 1.8), Color(0.28, 0.11, 0.05), Vector3(0.0, 0.0, 0.24))
-		_add_visual_box(visual_root, "FallenScreen", Vector3(3.4, 1.65, 0.12), Vector3(1.4, 0.82, -2.1), Color(0.53, 0.43, 0.3), Vector3(0.0, 0.0, -0.38))
-		_add_visual_box(visual_root, "RaisedPlatform", Vector3(3.0, 0.42, 2.4), Vector3(1.8, 0.21, 1.8), Color(0.36, 0.19, 0.09))
-		_add_visual_box(visual_root, "TrapDrumRack", Vector3(2.0, 1.1, 0.55), Vector3(-1.8, 0.55, -2.6), Color(0.36, 0.08, 0.035))
-	_add_drum_motif(visual_root, Vector3(0, 2.3, -4.78))
-	_add_lantern(visual_root, Vector3(0, 3.65, 0))
+		_add_visual_box(parent, "TiltedBookcase", Vector3(1.3, 3.2, 0.65), Vector3(-3.6, 1.6, 1.8), Color(0.28, 0.11, 0.05), Vector3(0.0, 0.0, 0.24))
+		_add_visual_box(parent, "FallenScreen", Vector3(3.4, 1.65, 0.12), Vector3(1.4, 0.82, -2.1), Color(0.53, 0.43, 0.3), Vector3(0.0, 0.0, -0.38))
+		_add_visual_box(parent, "RaisedPlatform", Vector3(3.0, 0.42, 2.4), Vector3(1.8, 0.21, 1.8), Color(0.36, 0.19, 0.09))
+		_add_visual_box(parent, "TrapDrumRack", Vector3(2.0, 1.1, 0.55), Vector3(-1.8, 0.55, -2.6), Color(0.36, 0.08, 0.035))
+	_add_drum_motif(parent, Vector3(0, 2.3, -4.78))
+	_add_lantern(parent, Vector3(0, 3.65, 0))
 	_build_dust_motes()
+
+func _build_state_geometry() -> void:
 	state_geometry = Node3D.new()
 	state_geometry.name = "WalkableStates"
 	add_child(state_geometry)
@@ -125,6 +135,8 @@ func _build_room() -> void:
 	safe_anchor.name = "SafeAnchor"
 	safe_anchor.position = Vector3(0, 1.1, 1.5)
 	add_child(safe_anchor)
+
+func _build_exit_bridge() -> void:
 	var bridge_root := Node3D.new()
 	bridge_root.name = "PuzzleExitBridge"
 	bridge_root.position = Vector3(0, 0, -8.5)
